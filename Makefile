@@ -1,4 +1,4 @@
-.PHONY: install up down logs run test lint
+.PHONY: install up down recreate logs run test lint
 
 install:
 	uv sync
@@ -8,6 +8,9 @@ up:
 
 down:
 	docker compose down
+
+recreate:
+	docker compose down && docker compose up -d --build
 
 logs:
 	docker compose logs -f

@@ -10,6 +10,7 @@ dependencies = [
     "motor",
     "pdfplumber",
     "pydantic-settings",
+    "python-multipart",
     "pytest",
     "httpx",
     "ruff",

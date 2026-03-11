@@ -14,8 +14,10 @@ RUN uv sync --frozen
 
 ENV PATH="/app/.venv/bin:${PATH}"
 
-COPY src ./src
+# Application code is mounted at runtime via volume (see docker-compose.yml)
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 8000
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+ENTRYPOINT ["/docker-entrypoint.sh"]

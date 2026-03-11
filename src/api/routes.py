@@ -30,10 +30,10 @@ async def health() -> dict[str, str]:
 @router.post("/extract")
 async def extract_text(
     request: Request,
-    file: Annotated[UploadFile | None, File(None, description="Document file")],
     settings: Annotated[Settings, Depends(get_settings)],
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
     extractor: Annotated[DocumentExtractor, Depends(get_extractor)],
+    file: Annotated[UploadFile | None, File(description="Document file")] = None,
 ) -> dict[str, str]:
     if file is None:
         raise HTTPException(
