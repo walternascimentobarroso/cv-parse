@@ -22,6 +22,34 @@ def get_extractor(request: Request) -> DocumentExtractor:
     return extractor
 
 
+def _validate_upload(file: UploadFile | None, settings: Settings) -> UploadFile:
+    if file is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Document file is required.",
+        )
+    if file.content_type not in settings.allowed_content_types:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                "Unsupported document format. "
+                f"Supported formats: {', '.join(settings.allowed_content_types)}."
+            ),
+        )
+    return file
+
+
+def _check_size(size_bytes: int, settings: Settings) -> None:
+    if size_bytes > settings.max_document_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=(
+                "Document exceeds maximum allowed size "
+                f"({settings.max_document_size_bytes} bytes)."
+            ),
+        )
+
+
 @router.get("/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -35,66 +63,36 @@ async def extract_text(
     extractor: Annotated[DocumentExtractor, Depends(get_extractor)],
     file: Annotated[UploadFile | None, File(description="Document file")] = None,
 ) -> dict[str, str]:
-    if file is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Document file is required.",
-        )
-
-    if file.content_type not in settings.allowed_content_types:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Unsupported document format. "
-                f"Supported formats: {', '.join(settings.allowed_content_types)}."
-            ),
-        )
-
+    file = _validate_upload(file, settings)
     content = await file.read()
     size_bytes = len(content)
 
     if size_bytes == 0:
-        extracted_text = ""
-    else:
-        if size_bytes > settings.max_document_size_bytes:
-            raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail=(
-                    "Document exceeds maximum allowed size "
-                    f"({settings.max_document_size_bytes} bytes)."
-                ),
-            )
+        return {"text": "", "id": "", "format": file.content_type or ""}
 
-        try:
-            extracted_text = await run_in_threadpool(
-                extractor.extract,
-                content,
-                file.content_type,
-            )
-
-            record_id = await repo.save_extraction(
-                filename=file.filename,
-                content_type=file.content_type,
-                size_bytes=size_bytes,
-                extracted_text=extracted_text,
-                status="success",
-            )
-        except Exception:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to process document.",
-            )
-
-    if file is None:
-        # Should not happen due to earlier guard, but keeps mypy happy.
+    _check_size(size_bytes, settings)
+    try:
+        extracted_text = await run_in_threadpool(
+            extractor.extract,
+            content,
+            file.content_type,
+        )
+        record_id = await repo.save_extraction(
+            filename=file.filename,
+            content_type=file.content_type,
+            size_bytes=size_bytes,
+            extracted_text=extracted_text,
+            status="success",
+        )
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unexpected missing file.",
+            detail="Failed to process document.",
         )
 
     return {
         "text": extracted_text,
         "id": record_id,
-        "format": file.content_type,
+        "format": file.content_type or "",
     }
 

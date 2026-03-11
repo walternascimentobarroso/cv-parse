@@ -1,7 +1,5 @@
 from datetime import datetime
-from typing import Any
 
-from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 
 from src.infra.schemas import ExtractionRecord
