@@ -1,0 +1,20 @@
+[project]
+name = "cv-doc-to-text-api"
+version = "0.1.0"
+description = "Doc-to-text API with improved development environment and tooling"
+requires-python = ">=3.12"
+
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "motor",
+    "pdfplumber",
+    "pydantic-settings",
+    "pytest",
+    "httpx",
+    "ruff",
+]
+
+[tool.uv]
+package = false
+

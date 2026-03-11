@@ -1,8 +1,0 @@
-fastapi
-uvicorn[standard]
-motor
-pdfplumber
-pydantic-settings
-pytest
-httpx
-ruff
