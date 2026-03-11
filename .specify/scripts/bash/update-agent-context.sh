@@ -474,10 +474,11 @@ update_existing_agent_file() {
         
         # Update timestamp
         if [[ "$line" =~ \*\*Last\ updated\*\*:.*[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9] ]]; then
-            echo "$line" | sed "s/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/$current_date/" >> "$temp_file"
-        else
-            echo "$line" >> "$temp_file"
+            if [[ "$line" =~ ([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]) ]]; then
+                line="${line//${BASH_REMATCH[1]}/$current_date}"
+            fi
         fi
+        echo "$line" >> "$temp_file"
     done < "$target_file"
     
     # Post-loop check: if we're still in the Active Technologies section and haven't added new entries
