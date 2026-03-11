@@ -1,4 +1,4 @@
-.PHONY: install up down recreate logs run test lint
+.PHONY: install up down recreate logs run test lint deactivate
 
 install:
 	uv sync
@@ -24,3 +24,6 @@ test:
 lint:
 	uv run ruff check .
 
+# Exit the virtual environment (run 'deactivate' in your shell for the current session)
+deactivate:
+	deactivate

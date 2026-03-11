@@ -5,7 +5,8 @@ def test_plain_text_extraction() -> None:
     extractor = SimpleDocumentExtractor(["text/plain"])
     content = "hello world".encode("utf-8")
     result = extractor.extract(content, "text/plain")
-    assert result == "hello world"
+    if result != "hello world":
+        raise AssertionError(f"Expected 'hello world', got {result!r}")
 
 
 def test_pdf_extraction_uses_pdf_handler(monkeypatch) -> None:
@@ -21,5 +22,6 @@ def test_pdf_extraction_uses_pdf_handler(monkeypatch) -> None:
     )
 
     result = extractor.extract(b"%PDF-1.4", "application/pdf")
-    assert result == "pdf text"
+    if result != "pdf text":
+        raise AssertionError(f"Expected 'pdf text', got {result!r}")
 
