@@ -23,9 +23,9 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create project structure per plan.md: `src/`, `src/api/`, `src/domain/`, `src/infra/`, `tests/`
-- [ ] T002 Initialize Python project with FastAPI and minimal deps: add `pyproject.toml` or `requirements.txt` (FastAPI, uvicorn, motor or pymongo, one PDF lib e.g. PyMuPDF or pdfplumber)
-- [ ] T003 [P] Configure linting and formatting (e.g. Ruff) in `pyproject.toml` or `ruff.toml`
+- [x] T001 Create project structure per plan.md: `src/`, `src/api/`, `src/domain/`, `src/infra/`, `tests/`
+- [x] T002 Initialize Python project with FastAPI and minimal deps: add `pyproject.toml` or `requirements.txt` (FastAPI, uvicorn, motor or pymongo, one PDF lib e.g. PyMuPDF or pdfplumber)
+- [x] T003 [P] Configure linting and formatting (e.g. Ruff) in `pyproject.toml` or `ruff.toml`
 
 ---
 
@@ -35,11 +35,11 @@
 
 **⚠️ CRITICAL**: No user story work until this phase is complete
 
-- [ ] T004 Add `src/infra/config.py`: settings from env (MONGODB_URI, MONGODB_DB, MAX_DOCUMENT_SIZE_BYTES), with sensible defaults
-- [ ] T005 [P] Add `Dockerfile` for Python 3.12 app (copy src, install deps, run uvicorn)
-- [ ] T006 [P] Add `docker-compose.yml` with app service and MongoDB; expose app on 8000, MongoDB on 27017
-- [ ] T007 Implement `src/infra/storage.py`: MongoDB repository for ExtractionRecord (collection `extractions`); save(document) returning id; optional get_by_id; use config for connection
-- [ ] T008 Add `src/main.py`: FastAPI app, lifespan for MongoDB connect/disconnect, include router from `src/api/routes.py`
+- [x] T004 Add `src/infra/config.py`: settings from env (MONGODB_URI, MONGODB_DB, MAX_DOCUMENT_SIZE_BYTES), with sensible defaults
+- [x] T005 [P] Add `Dockerfile` for Python 3.12 app (copy src, install deps, run uvicorn)
+- [x] T006 [P] Add `docker-compose.yml` with app service and MongoDB; expose app on 8000, MongoDB on 27017
+- [x] T007 Implement `src/infra/storage.py`: MongoDB repository for ExtractionRecord (collection `extractions`); save(document) returning id; optional get_by_id; use config for connection
+- [x] T008 Add `src/main.py`: FastAPI app, lifespan for MongoDB connect/disconnect, include router from `src/api/routes.py`
 
 **Checkpoint**: Foundation ready; user story implementation can begin
 
@@ -53,10 +53,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [P] [US1] Define ExtractionRecord schema (fields per data-model.md) in `src/infra/storage.py` or `src/infra/schemas.py`
-- [ ] T010 [US1] Implement `src/domain/extractor.py`: extraction interface (e.g. `extract(bytes, content_type) -> str`) and implementation(s) for `text/plain` and `application/pdf`; return UTF-8 text; empty content returns empty string
-- [ ] T011 [US1] Implement POST `/extract` in `src/api/routes.py`: multipart file upload (field `file`), call extractor, persist via storage, return JSON `{ "text", "id", "format" }` per contracts/api.md
-- [ ] T012 [US1] Ensure response encoding UTF-8 and handle empty extracted text (return empty string or explicit indicator) per spec edge cases
+- [x] T009 [P] [US1] Define ExtractionRecord schema (fields per data-model.md) in `src/infra/storage.py` or `src/infra/schemas.py`
+- [x] T010 [US1] Implement `src/domain/extractor.py`: extraction interface (e.g. `extract(bytes, content_type) -> str`) and implementation(s) for `text/plain` and `application/pdf`; return UTF-8 text; empty content returns empty string
+- [x] T011 [US1] Implement POST `/extract` in `src/api/routes.py`: multipart file upload (field `file`), call extractor, persist via storage, return JSON `{ "text", "id", "format" }` per contracts/api.md
+- [x] T012 [US1] Ensure response encoding UTF-8 and handle empty extracted text (return empty string or explicit indicator) per spec edge cases
 
 **Checkpoint**: User Story 1 is functional and independently testable
 
@@ -70,8 +70,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T013 [US2] In `src/api/routes.py` validate file is present and content-type is in allowed list (e.g. `text/plain`, `application/pdf`); return 400 with clear `detail` for missing file or unsupported format
-- [ ] T014 [US2] Document supported formats in OpenAPI description or error message (per FR-002 and contracts/api.md)
+- [x] T013 [US2] In `src/api/routes.py` validate file is present and content-type is in allowed list (e.g. `text/plain`, `application/pdf`); return 400 with clear `detail` for missing file or unsupported format
+- [x] T014 [US2] Document supported formats in OpenAPI description or error message (per FR-002 and contracts/api.md)
 
 **Checkpoint**: User Stories 1 and 2 both work independently
 
@@ -85,8 +85,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T015 [US3] In `src/api/routes.py` enforce max document size (from config); reject with 413 and JSON `detail` stating the limit per contracts/api.md
-- [ ] T016 [US3] Wrap extraction and storage in try/except in `src/api/routes.py`; on failure return 500 with generic `detail` only (no stack trace or internal details) per FR-006
+- [x] T015 [US3] In `src/api/routes.py` enforce max document size (from config); reject with 413 and JSON `detail` stating the limit per contracts/api.md
+- [x] T016 [US3] Wrap extraction and storage in try/except in `src/api/routes.py`; on failure return 500 with generic `detail` only (no stack trace or internal details) per FR-006
 
 **Checkpoint**: All user stories are independently functional
 
@@ -96,9 +96,9 @@
 
 **Purpose**: Improvements across stories and validation
 
-- [ ] T017 [P] Add `tests/conftest.py` with FastAPI test client fixture and optional test MongoDB or in-memory fixture
-- [ ] T018 [P] Add `tests/test_api.py`: at least one happy-path POST `/extract` and one 400/413/500 case
-- [ ] T019 [P] Add `tests/test_domain.py`: unit tests for extractor (plain text and PDF) in `src/domain/extractor.py`
+- [x] T017 [P] Add `tests/conftest.py` with FastAPI test client fixture and optional test MongoDB or in-memory fixture
+- [x] T018 [P] Add `tests/test_api.py`: at least one happy-path POST `/extract` and one 400/413/500 case
+- [x] T019 [P] Add `tests/test_domain.py`: unit tests for extractor (plain text and PDF) in `src/domain/extractor.py`
 - [ ] T020 Run quickstart.md validation: `docker compose up`, then `curl -X POST http://localhost:8000/extract -F "file=@<sample>.pdf"` and verify response
 
 ---

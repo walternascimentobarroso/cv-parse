@@ -7,3 +7,19 @@ def test_plain_text_extraction() -> None:
     result = extractor.extract(content, "text/plain")
     assert result == "hello world"
 
+
+def test_pdf_extraction_uses_pdf_handler(monkeypatch) -> None:
+    extractor = SimpleDocumentExtractor(["application/pdf"])
+
+    def fake_extract_pdf(self, content: bytes) -> str:  # type: ignore[no-untyped-def]
+        return "pdf text"
+
+    monkeypatch.setattr(
+        extractor,
+        "_extract_pdf",
+        fake_extract_pdf,
+    )
+
+    result = extractor.extract(b"%PDF-1.4", "application/pdf")
+    assert result == "pdf text"
+

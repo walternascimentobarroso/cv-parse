@@ -30,7 +30,7 @@ async def health() -> dict[str, str]:
 @router.post("/extract")
 async def extract_text(
     request: Request,
-    file: Annotated[UploadFile, File(..., description="Document file")],
+    file: Annotated[UploadFile | None, File(None, description="Document file")],
     settings: Annotated[Settings, Depends(get_settings)],
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
     extractor: Annotated[DocumentExtractor, Depends(get_extractor)],
@@ -44,7 +44,10 @@ async def extract_text(
     if file.content_type not in settings.allowed_content_types:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Unsupported document format.",
+            detail=(
+                "Unsupported document format. "
+                f"Supported formats: {', '.join(settings.allowed_content_types)}."
+            ),
         )
 
     content = await file.read()
@@ -56,26 +59,38 @@ async def extract_text(
         if size_bytes > settings.max_document_size_bytes:
             raise HTTPException(
                 status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-                detail="Document too large.",
+                detail=(
+                    "Document exceeds maximum allowed size "
+                    f"({settings.max_document_size_bytes} bytes)."
+                ),
             )
 
         try:
             extracted_text = await run_in_threadpool(
-                extractor.extract, content, file.content_type
+                extractor.extract,
+                content,
+                file.content_type,
+            )
+
+            record_id = await repo.save_extraction(
+                filename=file.filename,
+                content_type=file.content_type,
+                size_bytes=size_bytes,
+                extracted_text=extracted_text,
+                status="success",
             )
         except Exception:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error while extracting text.",
+                detail="Failed to process document.",
             )
 
-    record_id = await repo.save_extraction(
-        filename=file.filename,
-        content_type=file.content_type,
-        size_bytes=size_bytes,
-        extracted_text=extracted_text,
-        status="success",
-    )
+    if file is None:
+        # Should not happen due to earlier guard, but keeps mypy happy.
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unexpected missing file.",
+        )
 
     return {
         "text": extracted_text,
