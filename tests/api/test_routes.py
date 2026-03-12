@@ -5,35 +5,46 @@ from fastapi.testclient import TestClient
 
 def test_health(client: TestClient) -> None:
     response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json().get("status") == "ok"
+    if response.status_code != 200:
+        raise AssertionError(f"Expected status 200, got {response.status_code}")
+    if response.json().get("status") != "ok":
+        raise AssertionError(f"Expected status 'ok', got {response.json().get('status')}")
 
 
 def test_extract_missing_file(client: TestClient) -> None:
     response = client.post("/extract")
-    assert response.status_code == 400
-    assert response.json()["detail"] == "Document file is required."
+    if response.status_code != 400:
+        raise AssertionError(f"Expected status 400, got {response.status_code}")
+    if response.json()["detail"] != "Document file is required.":
+        raise AssertionError(f"Expected 'Document file is required.', got {response.json()['detail']}")
 
 
 def test_extract_plain_text_success(client: TestClient) -> None:
     files = {"file": ("test.txt", b"hello world", "text/plain")}
     response = client.post("/extract", files=files)
 
-    assert response.status_code == 200
+    if response.status_code != 200:
+        raise AssertionError(f"Expected status 200, got {response.status_code}")
     body = response.json()
-    assert body["text"] == "hello world"
-    assert body["format"] == "text/plain"
-    assert isinstance(body["id"], str)
+    if body["text"] != "hello world":
+        raise AssertionError(f"Expected text 'hello world', got {body['text']}")
+    if body["format"] != "text/plain":
+        raise AssertionError(f"Expected format 'text/plain', got {body['format']}")
+    if not isinstance(body["id"], str):
+        raise AssertionError(f"Expected id to be str, got {type(body['id'])}")
 
 
 def test_extract_unsupported_format(client: TestClient) -> None:
     files = {"file": ("image.jpg", b"binary", "image/jpeg")}
     response = client.post("/extract", files=files)
 
-    assert response.status_code == 400
+    if response.status_code != 400:
+        raise AssertionError(f"Expected status 400, got {response.status_code}")
     detail = response.json()["detail"]
-    assert "Unsupported document format." in detail
-    assert "Supported formats" in detail
+    if "Unsupported document format." not in detail:
+        raise AssertionError(f"Expected 'Unsupported document format.' in detail: {detail}")
+    if "Supported formats" not in detail:
+        raise AssertionError(f"Expected 'Supported formats' in detail: {detail}")
 
 
 def test_extract_too_large(client: TestClient) -> None:
@@ -42,8 +53,10 @@ def test_extract_too_large(client: TestClient) -> None:
     files = {"file": ("big.txt", oversized_content, "text/plain")}
     response = client.post("/extract", files=files)
 
-    assert response.status_code == 413
-    assert "Document exceeds maximum allowed size" in response.json()["detail"]
+    if response.status_code != 413:
+        raise AssertionError(f"Expected status 413, got {response.status_code}")
+    if "Document exceeds maximum allowed size" not in response.json()["detail"]:
+        raise AssertionError(f"Expected size error in detail: {response.json()['detail']}")
 
 
 def test_extract_internal_error(client: TestClient) -> None:
@@ -58,7 +71,9 @@ def test_extract_internal_error(client: TestClient) -> None:
     try:
         files = {"file": ("test.txt", b"hello", "text/plain")}
         response = client.post("/extract", files=files)
-        assert response.status_code == 500
-        assert response.json()["detail"] == "Failed to process document."
+        if response.status_code != 500:
+            raise AssertionError(f"Expected status 500, got {response.status_code}")
+        if response.json()["detail"] != "Failed to process document.":
+            raise AssertionError(f"Expected 'Failed to process document.', got {response.json()['detail']}")
     finally:
         app.state.document_extractor = original

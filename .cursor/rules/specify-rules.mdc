@@ -44,4 +44,15 @@ Python 3.12 (existing; from 001-doc-to-text-api): Follow standard conventions
 - 002-dev-env-tooling: Added Python 3.12 (existing; from 001-doc-to-text-api) + Unchanged from 001 (FastAPI, motor, pdfplumber, pydantic-settings, etc.); managed via uv and `pyproject.toml`
 
 <!-- MANUAL ADDITIONS START -->
+
+## Assert Statements (Bandit)
+
+Do **not** use `assert` for enforcing interface constraints or critical checks. `assert` is stripped when Python runs with optimization (`-O`), so those checks disappear in optimized builds.
+
+- **Use**: explicit checks with `raise AssertionError(...)` so behavior is unchanged with or without `-O`.
+- **Good**: `if not condition: raise AssertionError("User must be logged in")` then continue.
+- **Bad**: `assert condition` then continue.
+
+Apply this in both production and test code (e.g. in `tests/`).
+
 <!-- MANUAL ADDITIONS END -->
