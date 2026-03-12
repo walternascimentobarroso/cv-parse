@@ -1,14 +1,25 @@
+"""
+Shared test configuration and fixtures.
+
+- TestClient uses a test app with a minimal lifespan (no real DB).
+- get_repo and get_extractor are satisfied via app.state set in test lifespan.
+- Domain tests use in-memory or direct instantiation; no server required.
+"""
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.routes import get_extractor, get_repo
+from src.api.routes import router as api_router
 from src.domain.extractor import SimpleDocumentExtractor
-from src.main import app
 
 
 class InMemoryExtractionRepository:
+    """In-memory double for ExtractionRepository; no real DB required."""
+
     def __init__(self) -> None:
         self.saved: list[dict[str, object]] = []
 
@@ -32,13 +43,32 @@ class InMemoryExtractionRepository:
         return str(len(self.saved))
 
 
-@pytest.fixture(scope="session")
-def client() -> TestClient:
-    app.dependency_overrides[get_repo] = lambda: InMemoryExtractionRepository()
-    app.dependency_overrides[get_extractor] = lambda: SimpleDocumentExtractor(
+@asynccontextmanager
+async def _test_lifespan(app: FastAPI):
+    """Lifespan that sets app.state with in-memory repo and extractor; no MongoDB."""
+    app.state.extraction_repo = InMemoryExtractionRepository()
+    app.state.document_extractor = SimpleDocumentExtractor(
         ["text/plain", "application/pdf"]
     )
+    yield
 
-    with TestClient(app) as test_client:
+
+@pytest.fixture(scope="session")
+def test_app() -> FastAPI:
+    """FastAPI app with test lifespan (no real DB)."""
+    app = FastAPI(title="Doc-to-Text API (test)", lifespan=_test_lifespan)
+    app.include_router(api_router)
+    return app
+
+
+@pytest.fixture(scope="session")
+def client(test_app: FastAPI) -> TestClient:
+    """TestClient for API tests; uses test app so no real DB is required."""
+    with TestClient(test_app) as test_client:
         yield test_client
 
+
+@pytest.fixture
+def extractor() -> SimpleDocumentExtractor:
+    """Shared extractor instance for domain-layer tests (in-memory, no server)."""
+    return SimpleDocumentExtractor(["text/plain", "application/pdf"])

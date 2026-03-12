@@ -1,4 +1,4 @@
-.PHONY: install up down recreate logs run test lint deactivate
+.PHONY: install up down recreate logs run test test-unit test-api test-integration lint deactivate
 
 install:
 	uv sync
@@ -19,7 +19,16 @@ run:
 	uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
 
 test:
-	uv run pytest
+	docker compose run --rm api uv run pytest tests/
+
+test-unit:
+	uv run pytest tests/domain/
+
+test-api:
+	uv run pytest tests/api/
+
+test-integration:
+	uv run pytest tests/infra/
 
 lint:
 	uv run ruff check .

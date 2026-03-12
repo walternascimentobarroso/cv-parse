@@ -12,10 +12,15 @@ dependencies = [
     "pydantic-settings",
     "python-multipart",
     "pytest",
+    "pytest-cov",
     "httpx",
     "ruff",
 ]
 
 [tool.uv]
 package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
 
