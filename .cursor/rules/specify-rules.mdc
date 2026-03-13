@@ -10,6 +10,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-11
 
 ## Active Technologies
 - Python 3.12 (existing) + FastAPI, motor, pdfplumber, pydantic-settings (existing); pytest, httpx already in pyproject.toml (003-testing-strategy)
+- Python 3.12 + FastAPI, motor, pdfplumber, pydantic-settings (004-cv-api-refactor)
+- MongoDB (motor); collection and schema unchanged (004-cv-api-refactor)
 
 - Python 3.12 (existing; from 001-doc-to-text-api) + Unchanged from 001 (FastAPI, motor, pdfplumber, pydantic-settings, etc.); managed via uv and `pyproject.toml` (002-dev-env-tooling)
 
@@ -39,6 +41,7 @@ tests/           # Mirror src: tests/domain, tests/api, tests/infra
 Python 3.12 (existing; from 001-doc-to-text-api): Follow standard conventions
 
 ## Recent Changes
+- 004-cv-api-refactor: Added Python 3.12 + FastAPI, motor, pdfplumber, pydantic-settings
 - 003-testing-strategy: Added Python 3.12 (existing) + FastAPI, motor, pdfplumber, pydantic-settings (existing); pytest, httpx already in pyproject.toml
 
 - 002-dev-env-tooling: Added Python 3.12 (existing; from 001-doc-to-text-api) + Unchanged from 001 (FastAPI, motor, pdfplumber, pydantic-settings, etc.); managed via uv and `pyproject.toml`

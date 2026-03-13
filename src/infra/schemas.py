@@ -16,3 +16,23 @@ class ExtractionRecord(BaseModel):
     def to_mongo(self) -> dict[str, object]:
         return self.model_dump()
 
+
+class HealthResponse(BaseModel):
+    """GET /health response."""
+
+    status: str
+
+
+class ExtractResponse(BaseModel):
+    """POST /extract success response."""
+
+    text: str
+    id: str
+    format: str
+
+
+class ErrorDetail(BaseModel):
+    """Standard error body (e.g. 400, 413, 500)."""
+
+    detail: str
+

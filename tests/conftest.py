@@ -3,7 +3,7 @@ Shared test configuration and fixtures.
 
 - TestClient uses a test app with a minimal lifespan (no real DB).
 - get_repo and get_extractor are satisfied via app.state set in test lifespan.
-- Domain tests use in-memory or direct instantiation; no server required.
+- Use dependency_overrides to inject failing extractor for 500 tests.
 """
 from __future__ import annotations
 
@@ -13,8 +13,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from src.api.dependencies import get_extractor, get_repo
 from src.api.routes import router as api_router
-from src.domain.extractor import SimpleDocumentExtractor
+from src.infra.extractors.registry import ExtractorRegistry
 
 
 class InMemoryExtractionRepository:
@@ -45,11 +46,9 @@ class InMemoryExtractionRepository:
 
 @asynccontextmanager
 async def _test_lifespan(app: FastAPI):
-    """Lifespan that sets app.state with in-memory repo and extractor; no MongoDB."""
+    """Lifespan that sets app.state with in-memory repo and registry; no MongoDB."""
     app.state.extraction_repo = InMemoryExtractionRepository()
-    app.state.document_extractor = SimpleDocumentExtractor(
-        ["text/plain", "application/pdf"]
-    )
+    app.state.document_extractor = ExtractorRegistry()
     yield
 
 
@@ -69,6 +68,6 @@ def client(test_app: FastAPI) -> TestClient:
 
 
 @pytest.fixture
-def extractor() -> SimpleDocumentExtractor:
-    """Shared extractor instance for domain-layer tests (in-memory, no server)."""
-    return SimpleDocumentExtractor(["text/plain", "application/pdf"])
+def extractor() -> ExtractorRegistry:
+    """Shared extractor registry for domain-layer tests (no server)."""
+    return ExtractorRegistry()

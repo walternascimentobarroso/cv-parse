@@ -1,14 +1,10 @@
 from __future__ import annotations
 
-from typing import Protocol
 import io
 
 import pdfplumber
 
-
-class DocumentExtractor(Protocol):
-    def extract(self, content: bytes, content_type: str) -> str:  # pragma: no cover
-        ...
+from src.domain.constants import MIME_APPLICATION_PDF, MIME_TEXT_PLAIN
 
 
 class SimpleDocumentExtractor:
@@ -22,10 +18,10 @@ class SimpleDocumentExtractor:
         if not content:
             return ""
 
-        if content_type == "text/plain":
+        if content_type == MIME_TEXT_PLAIN:
             return content.decode("utf-8", errors="ignore")
 
-        if content_type == "application/pdf":
+        if content_type == MIME_APPLICATION_PDF:
             return self._extract_pdf(content)
 
         raise ValueError(f"Unsupported content type: {content_type}")

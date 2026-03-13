@@ -2,6 +2,8 @@
 
 from fastapi.testclient import TestClient
 
+from src.api.dependencies import get_extractor
+
 
 def test_health(client: TestClient) -> None:
     response = client.get("/health")
@@ -60,14 +62,14 @@ def test_extract_too_large(client: TestClient) -> None:
 
 
 def test_extract_internal_error(client: TestClient) -> None:
-    """Override app extractor to force 500; restore after test."""
+    """Use dependency override to inject failing extractor; assert 500 and detail."""
+
     class FailingExtractor:
         def extract(self, content: bytes, content_type: str) -> str:
             raise RuntimeError("boom")
 
     app = client.app
-    original = app.state.document_extractor
-    app.state.document_extractor = FailingExtractor()
+    app.dependency_overrides[get_extractor] = lambda: FailingExtractor()
     try:
         files = {"file": ("test.txt", b"hello", "text/plain")}
         response = client.post("/extract", files=files)
@@ -76,4 +78,4 @@ def test_extract_internal_error(client: TestClient) -> None:
         if response.json()["detail"] != "Failed to process document.":
             raise AssertionError(f"Expected 'Failed to process document.', got {response.json()['detail']}")
     finally:
-        app.state.document_extractor = original
+        app.dependency_overrides.pop(get_extractor, None)

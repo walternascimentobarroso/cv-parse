@@ -1,98 +1,78 @@
+"""Thin HTTP layer: delegate validation to services, use DI for repo and extractor."""
+
 from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 
-from src.domain.extractor import DocumentExtractor
+from src.api.dependencies import get_extractor, get_repo
+from src.domain.document_extractor_contracts import DocumentExtractor
 from src.infra.config import Settings, get_settings
+from src.infra.logging_config import get_logger
+from src.infra.schemas import ExtractResponse, HealthResponse
 from src.infra.storage import ExtractionRepository
+from src.services.upload_validator import ValidationError, validate_upload
 
+logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_repo(request: Request) -> ExtractionRepository:
-    repo: ExtractionRepository = request.app.state.extraction_repo
-    return repo
+@router.get("/health", response_model=HealthResponse)
+async def health() -> HealthResponse:
+    return HealthResponse(status="ok")
 
 
-def get_extractor(request: Request) -> DocumentExtractor:
-    extractor: DocumentExtractor = request.app.state.document_extractor
-    return extractor
-
-
-def _validate_upload(file: UploadFile | None, settings: Settings) -> UploadFile:
-    if file is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Document file is required.",
-        )
-    if file.content_type not in settings.allowed_content_types:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=(
-                "Unsupported document format. "
-                f"Supported formats: {', '.join(settings.allowed_content_types)}."
-            ),
-        )
-    return file
-
-
-def _check_size(size_bytes: int, settings: Settings) -> None:
-    if size_bytes > settings.max_document_size_bytes:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=(
-                "Document exceeds maximum allowed size "
-                f"({settings.max_document_size_bytes} bytes)."
-            ),
-        )
-
-
-@router.get("/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok"}
-
-
-@router.post("/extract")
+@router.post("/extract", response_model=ExtractResponse)
 async def extract_text(
-    request: Request,
     settings: Annotated[Settings, Depends(get_settings)],
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
     extractor: Annotated[DocumentExtractor, Depends(get_extractor)],
     file: Annotated[UploadFile | None, File(description="Document file")] = None,
-) -> dict[str, str]:
-    file = _validate_upload(file, settings)
-    content = await file.read()
-    size_bytes = len(content)
+) -> ExtractResponse:
+    logger.info("extract_upload_attempt", extra={"filename": file.filename if file else None})
+    result = await validate_upload(file, settings)
 
-    if size_bytes == 0:
-        return {"text": "", "id": "", "format": file.content_type or ""}
+    if isinstance(result, ValidationError):
+        raise HTTPException(
+            status_code=result.status_code,
+            detail=result.detail,
+        )
 
-    _check_size(size_bytes, settings)
+    if result.size_bytes == 0:
+        return ExtractResponse(
+            text="",
+            id="",
+            format=result.content_type or "",
+        )
+
     try:
         extracted_text = await run_in_threadpool(
             extractor.extract,
-            content,
-            file.content_type,
+            result.content,
+            result.content_type,
         )
         record_id = await repo.save_extraction(
-            filename=file.filename,
-            content_type=file.content_type,
-            size_bytes=size_bytes,
+            filename=result.filename,
+            content_type=result.content_type,
+            size_bytes=result.size_bytes,
             extracted_text=extracted_text,
             status="success",
         )
-    except Exception:
+        logger.info(
+            "extraction_success",
+            extra={"record_id": record_id, "content_type": result.content_type, "size_bytes": result.size_bytes},
+        )
+    except Exception as exc:
+        logger.exception("extraction_failure", extra={"content_type": result.content_type, "error": str(exc)})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process document.",
         )
 
-    return {
-        "text": extracted_text,
-        "id": record_id,
-        "format": file.content_type or "",
-    }
-
+    return ExtractResponse(
+        text=extracted_text,
+        id=record_id,
+        format=result.content_type or "",
+    )
