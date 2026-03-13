@@ -4,17 +4,28 @@ from functools import lru_cache
 from pydantic import computed_field, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from src.domain.constants import DEFAULT_ALLOWED_CONTENT_TYPES
+_DEFAULT_ALLOWED_CONTENT_TYPES = "application/pdf,text/plain"
+
+
+def _default_content_types_list() -> list[str]:
+    return [x.strip() for x in _DEFAULT_ALLOWED_CONTENT_TYPES.split(",") if x.strip()]
+
+
+def _split_content_types(s: str) -> list[str]:
+    return [x.strip() for x in s.split(",") if x.strip()]
 
 
 def _parse_allowed_content_types(v: str) -> list[str]:
     s = (v or "").strip()
     if not s:
-        return DEFAULT_ALLOWED_CONTENT_TYPES
+        return _default_content_types_list()
     try:
-        return json.loads(v)
+        result = json.loads(v)
     except json.JSONDecodeError:
-        return [x.strip() for x in v.split(",") if x.strip()]
+        result = _split_content_types(v)
+    if isinstance(result, list) and result:
+        return [str(x).strip() for x in result if str(x).strip()]
+    return _default_content_types_list()
 
 
 class Settings(BaseSettings):
@@ -22,9 +33,12 @@ class Settings(BaseSettings):
 
     mongodb_uri: str = "mongodb://mongodb:27017"
     mongodb_db: str = "doctotext"
+    extractions_collection: str = Field(default="extractions", alias="EXTRACTIONS_COLLECTION")
+    mime_type_pdf: str = Field(default="application/pdf", alias="MIME_TYPE_PDF")
+    mime_type_plain: str = Field(default="text/plain", alias="MIME_TYPE_PLAIN")
     max_document_size_bytes: int = 10 * 1024 * 1024
     allowed_content_types_raw: str = Field(
-        default=",".join(DEFAULT_ALLOWED_CONTENT_TYPES),
+        default=_DEFAULT_ALLOWED_CONTENT_TYPES,
         alias="ALLOWED_CONTENT_TYPES",
     )
 

@@ -1,15 +1,23 @@
+"""Document extractor: dispatches by content type. MIME types come from caller (e.g. config)."""
+
 from __future__ import annotations
 
 import io
 
 import pdfplumber
 
-from src.domain.constants import MIME_APPLICATION_PDF, MIME_TEXT_PLAIN
-
 
 class SimpleDocumentExtractor:
-    def __init__(self, allowed_content_types: list[str]) -> None:
+    def __init__(
+        self,
+        allowed_content_types: list[str],
+        *,
+        mime_type_plain: str = "text/plain",
+        mime_type_pdf: str = "application/pdf",
+    ) -> None:
         self._allowed = set(allowed_content_types)
+        self._mime_plain = mime_type_plain
+        self._mime_pdf = mime_type_pdf
 
     def extract(self, content: bytes, content_type: str) -> str:
         if content_type not in self._allowed:
@@ -18,10 +26,10 @@ class SimpleDocumentExtractor:
         if not content:
             return ""
 
-        if content_type == MIME_TEXT_PLAIN:
+        if content_type == self._mime_plain:
             return content.decode("utf-8", errors="ignore")
 
-        if content_type == MIME_APPLICATION_PDF:
+        if content_type == self._mime_pdf:
             return self._extract_pdf(content)
 
         raise ValueError(f"Unsupported content type: {content_type}")

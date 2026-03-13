@@ -6,7 +6,6 @@ from dataclasses import dataclass
 
 from fastapi import UploadFile
 
-from src.domain.constants import DEFAULT_ALLOWED_CONTENT_TYPES
 from src.infra.config import Settings
 from src.infra.logging_config import get_logger
 
@@ -67,7 +66,7 @@ async def validate_upload(
             detail="Document file is required.",
         )
 
-    allowed = set(settings.allowed_content_types or DEFAULT_ALLOWED_CONTENT_TYPES)
+    allowed = set(settings.allowed_content_types)
     content_type = file.content_type or ""
     if content_type not in allowed:
         logger.info(

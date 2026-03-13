@@ -13,7 +13,6 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from src.api.dependencies import get_extractor, get_repo
 from src.api.routes import router as api_router
 from src.infra.extractors.registry import ExtractorRegistry
 
@@ -48,7 +47,10 @@ class InMemoryExtractionRepository:
 async def _test_lifespan(app: FastAPI):
     """Lifespan that sets app.state with in-memory repo and registry; no MongoDB."""
     app.state.extraction_repo = InMemoryExtractionRepository()
-    app.state.document_extractor = ExtractorRegistry()
+    app.state.document_extractor = ExtractorRegistry(
+        mime_type_plain="text/plain",
+        mime_type_pdf="application/pdf",
+    )
     yield
 
 
@@ -70,4 +72,7 @@ def client(test_app: FastAPI) -> TestClient:
 @pytest.fixture
 def extractor() -> ExtractorRegistry:
     """Shared extractor registry for domain-layer tests (no server)."""
-    return ExtractorRegistry()
+    return ExtractorRegistry(
+        mime_type_plain="text/plain",
+        mime_type_pdf="application/pdf",
+    )

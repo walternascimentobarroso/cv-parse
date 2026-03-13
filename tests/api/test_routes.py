@@ -68,8 +68,11 @@ def test_extract_internal_error(client: TestClient) -> None:
         def extract(self, content: bytes, content_type: str) -> str:
             raise RuntimeError("boom")
 
+    def override_extractor():
+        return FailingExtractor()
+
     app = client.app
-    app.dependency_overrides[get_extractor] = lambda: FailingExtractor()
+    app.dependency_overrides[get_extractor] = override_extractor
     try:
         files = {"file": ("test.txt", b"hello", "text/plain")}
         response = client.post("/extract", files=files)

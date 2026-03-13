@@ -27,10 +27,10 @@ uv run uvicorn src.main:app --reload
 
 ## Project layout (after refactor)
 
-- **`src/api/`**: HTTP only. Routes use `Depends(get_repo)`, `Depends(get_extractor)`, and (if used) `Depends(get_upload_validator)`. No business logic; only call services/validators and return response models.
-- **`src/domain/`**: Interfaces (Protocols) and MIME/content-type constants. No FastAPI, no MongoDB.
-- **`src/services/`**: Upload validation (and optional extraction orchestration). Pure functions or small classes; no HTTP.
-- **`src/infra/`**: Config, MongoDB repository, schemas (e.g. `ExtractionRecord`), logging config, and extractors (PDF, plain text, registry). Uses domain interfaces and constants.
+- **`src/api/`**: HTTP only. Routes use `Depends(get_repo)` and `Depends(get_extractor)` from `api/dependencies.py`; validation is done via `services.upload_validator.validate_upload`. No business logic in routes; response models in `infra/schemas.py`.
+- **`src/domain/`**: Contract protocols (e.g. `DocumentExtractor`) in `document_extractor_contracts.py`; MIME/content-type constants in `constants.py`. No FastAPI, no MongoDB.
+- **`src/services/`**: Upload validation in `upload_validator.py` (result type: `ValidationOk` | `ValidationError`). Pure functions; no HTTP.
+- **`src/infra/`**: Config, MongoDB repository, schemas (`ExtractionRecord`, `ExtractResponse`, `HealthResponse`), logging config, and extractors (base, pdf, plain_text, registry). Uses domain constants and contracts.
 
 Dependencies are created in `main.py` lifespan and injected via FastAPI’s dependency system.
 
