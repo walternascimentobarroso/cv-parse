@@ -783,6 +783,7 @@ print_summary() {
 #==============================================================================
 
 main() {
+    local agent_type="${1:-}"
     # Validate environment before proceeding
     validate_environment
     
@@ -791,13 +792,13 @@ main() {
     # Parse the plan file to extract project information
     if ! parse_plan_data "$NEW_PLAN"; then
         log_error "Failed to parse plan data"
-        exit 1
+        return 1
     fi
     
     # Process based on agent type argument
     local success=true
     
-    if [[ -z "$AGENT_TYPE" ]]; then
+    if [[ -z "$agent_type" ]]; then
         # No specific agent provided - update all existing agent files
         log_info "No agent specified, updating all existing agent files..."
         if ! update_all_existing_agents; then
@@ -805,8 +806,8 @@ main() {
         fi
     else
         # Specific agent provided - update only that agent
-        log_info "Updating specific agent: $AGENT_TYPE"
-        if ! update_specific_agent "$AGENT_TYPE"; then
+        log_info "Updating specific agent: $agent_type"
+        if ! update_specific_agent "$agent_type"; then
             success=false
         fi
     fi
@@ -816,14 +817,18 @@ main() {
     
     if [[ "$success" == true ]]; then
         log_success "Agent context update completed successfully"
-        exit 0
+        return 0
     else
         log_error "Agent context update completed with errors"
-        exit 1
+        return 1
     fi
 }
 
 # Execute main function if script is run directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main "$@"
+    if main "$@"; then
+        exit 0
+    else
+        exit 1
+    fi
 fi

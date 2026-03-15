@@ -7,8 +7,9 @@ Shared test configuration and fixtures.
 """
 from __future__ import annotations
 
-from datetime import UTC, datetime
+import asyncio
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 import pytest
 from fastapi import FastAPI
@@ -94,6 +95,7 @@ class InMemoryExtractionRepository:
 @asynccontextmanager
 async def _test_lifespan(app: FastAPI):
     """Lifespan that sets app.state with in-memory repo and registry; no MongoDB."""
+    await asyncio.sleep(0)  # Yield control so this context manager is genuinely async
     app.state.extraction_repo = InMemoryExtractionRepository()
     app.state.document_extractor = ExtractorRegistry(
         mime_type_plain="text/plain",

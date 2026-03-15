@@ -1,4 +1,12 @@
-.PHONY: install up down recreate logs run test test-unit test-api test-integration lint deactivate
+# Color Config
+NOCOLOR=\033[0m
+GREEN=\033[0;32m
+BGREEN=\033[1;32m
+YELLOW=\033[0;33m
+CYAN=\033[0;36m
+RED=\033[0;31m
+
+.PHONY: install up down recreate logs run test test-unit test-api test-integration lint deactivate clear-branches
 
 install:
 	uv sync
@@ -36,3 +44,10 @@ lint:
 # Exit the virtual environment (run 'deactivate' in your shell for the current session)
 deactivate:
 	deactivate
+
+clear-branches:
+	@echo ""
+	@git pull; git branch | grep -vE "(^\*|master|main|develop)" | xargs -r git branch -d
+	@echo ""
+	@echo "${GREEN}All old merged removed!${NOCOLOR}"
+	@echo ""

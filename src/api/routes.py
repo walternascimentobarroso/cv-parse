@@ -47,12 +47,12 @@ def _doc_to_detail(doc: dict) -> ExtractionDetailResponse:
     )
 
 
-@router.get("/health", response_model=HealthResponse)
+@router.get("/health")
 async def health() -> HealthResponse:
     return HealthResponse(status="ok")
 
 
-@router.post("/extract", response_model=ExtractResponse)
+@router.post("/extract")
 async def extract_text(
     settings: Annotated[Settings, Depends(get_settings)],
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
@@ -106,7 +106,7 @@ async def extract_text(
     )
 
 
-@router.get("/extractions", response_model=ExtractionListResponse)
+@router.get("/extractions")
 async def list_extractions(
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
 ) -> ExtractionListResponse:
@@ -115,7 +115,7 @@ async def list_extractions(
     return ExtractionListResponse(items=items)
 
 
-@router.get("/extractions/{id}", response_model=ExtractionDetailResponse)
+@router.get("/extractions/{id}")
 async def get_extraction(
     extraction_id: Annotated[str, Path(alias="id")],
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
@@ -128,7 +128,7 @@ async def get_extraction(
     return _doc_to_detail(doc)
 
 
-@router.patch("/extractions/{id}", response_model=ExtractionUpdateResponse)
+@router.patch("/extractions/{id}")
 async def update_extraction(
     extraction_id: Annotated[str, Path(alias="id")],  # noqa: A002
     body: ExtractionUpdateRequest,
