@@ -1,5 +1,7 @@
 # Doc-to-Text API – Development Environment
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=walternascimentobarroso_cv-parse&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=walternascimentobarroso_cv-parse)
+
 This repository contains a small Doc-to-Text API and an improved development environment focused on fast onboarding and simple workflows.
 
 ## Prerequisites

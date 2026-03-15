@@ -29,6 +29,8 @@ router = APIRouter()
 # 24-char hex string (MongoDB ObjectId). Invalid id → 404 like missing/deleted.
 OBJECTID_PATTERN = re.compile(r"^[0-9a-fA-F]{24}$")
 
+MSG_NOT_FOUND = "Not found"
+
 
 def _is_valid_object_id(value: str) -> bool:
     return bool(value and OBJECTID_PATTERN.match(value))
@@ -90,10 +92,17 @@ async def extract_text(
         )
         logger.info(
             "extraction_success",
-            extra={"record_id": record_id, "content_type": result.content_type, "size_bytes": result.size_bytes},
+            extra={
+                "record_id": record_id,
+                "content_type": result.content_type,
+                "size_bytes": result.size_bytes,
+            },
         )
     except Exception as exc:
-        logger.exception("extraction_failure", extra={"content_type": result.content_type, "error": str(exc)})
+        logger.exception(
+            "extraction_failure",
+            extra={"content_type": result.content_type, "error": str(exc)},
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process document.",
@@ -117,30 +126,30 @@ async def list_extractions(
 
 @router.get("/extractions/{id}")
 async def get_extraction(
-    extraction_id: Annotated[str, Path(alias="id")],
+    id: Annotated[str, Path()],  # noqa: A002  # pylint: disable=redefined-builtin
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
 ) -> ExtractionDetailResponse:
-    if not _is_valid_object_id(extraction_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-    doc = await repo.find_by_id(extraction_id)
+    if not _is_valid_object_id(id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    doc = await repo.find_by_id(id)
     if doc is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
     return _doc_to_detail(doc)
 
 
 @router.patch("/extractions/{id}")
 async def update_extraction(
-    extraction_id: Annotated[str, Path(alias="id")],  # noqa: A002
+    id: Annotated[str, Path()],  # noqa: A002  # pylint: disable=redefined-builtin
     body: ExtractionUpdateRequest,
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
 ) -> ExtractionUpdateResponse:
-    if not _is_valid_object_id(extraction_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    if not _is_valid_object_id(id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
     payload = body.model_dump(exclude_unset=True)
     if not payload:
-        doc = await repo.find_by_id(extraction_id)
+        doc = await repo.find_by_id(id)
         if doc is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
         return ExtractionUpdateResponse(
             id=doc["id"],
             filename=doc.get("filename"),
@@ -151,9 +160,9 @@ async def update_extraction(
             created_at=doc["created_at"],
             updated_at=doc.get("updated_at"),
         )
-    updated = await repo.update(extraction_id, payload)
+    updated = await repo.update(id, payload)
     if updated is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
     return ExtractionUpdateResponse(
         id=updated["id"],
         filename=updated.get("filename"),
@@ -168,11 +177,11 @@ async def update_extraction(
 
 @router.delete("/extractions/{id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_extraction(
-    extraction_id: Annotated[str, Path(alias="id")],  # noqa: A002
+    id: Annotated[str, Path()],  # noqa: A002  # pylint: disable=redefined-builtin
     repo: Annotated[ExtractionRepository, Depends(get_repo)],
 ) -> None:
-    if not _is_valid_object_id(extraction_id):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
-    deleted = await repo.soft_delete(extraction_id)
+    if not _is_valid_object_id(id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    deleted = await repo.soft_delete(id)
     if not deleted:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
