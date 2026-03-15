@@ -20,6 +20,9 @@ dependencies = [
 [tool.uv]
 package = false
 
+[tool.coverage.run]
+relative_files = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["."]

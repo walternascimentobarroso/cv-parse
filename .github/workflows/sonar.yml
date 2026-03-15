@@ -12,6 +12,8 @@ jobs:
     steps:
       # Pinned to full-length commit SHA (was @v4)
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         # Pinned to full-length commit SHA (was @v5)
@@ -25,11 +27,23 @@ jobs:
         with:
           version: "latest"
 
+      - name: Cache uv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-
+
       - name: Install dependencies
         run: uv sync
 
       - name: Run tests with coverage
-        run: uv run pytest tests/ --cov=src --cov-report=xml --cov-report=term
+        run: |
+          uv run pytest tests/ \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing 
 
       - name: SonarCloud Scan
         # Pinned to full-length commit SHA (was @v2)
