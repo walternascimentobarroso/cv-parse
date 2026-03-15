@@ -2,21 +2,49 @@
 
 from __future__ import annotations
 
+import re
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Path, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 
 from src.api.dependencies import get_extractor, get_repo
 from src.domain.document_extractor_contracts import DocumentExtractor
 from src.infra.config import Settings, get_settings
 from src.infra.logging_config import get_logger
-from src.infra.schemas import ExtractResponse, HealthResponse
+from src.infra.schemas import (
+    ExtractionDetailResponse,
+    ExtractionListResponse,
+    ExtractionUpdateRequest,
+    ExtractionUpdateResponse,
+    ExtractResponse,
+    HealthResponse,
+)
 from src.infra.storage import ExtractionRepository
 from src.services.upload_validator import ValidationError, validate_upload
 
 logger = get_logger(__name__)
 router = APIRouter()
+
+# 24-char hex string (MongoDB ObjectId). Invalid id → 404 like missing/deleted.
+OBJECTID_PATTERN = re.compile(r"^[0-9a-fA-F]{24}$")
+
+
+def _is_valid_object_id(value: str) -> bool:
+    return bool(value and OBJECTID_PATTERN.match(value))
+
+
+def _doc_to_detail(doc: dict) -> ExtractionDetailResponse:
+    return ExtractionDetailResponse(
+        id=doc["id"],
+        filename=doc.get("filename"),
+        content_type=doc["content_type"],
+        size_bytes=doc["size_bytes"],
+        extracted_text=doc["extracted_text"],
+        status=doc["status"],
+        created_at=doc["created_at"],
+        updated_at=doc.get("updated_at"),
+    )
 
 
 @router.get("/health", response_model=HealthResponse)
@@ -76,3 +104,75 @@ async def extract_text(
         id=record_id,
         format=result.content_type or "",
     )
+
+
+@router.get("/extractions", response_model=ExtractionListResponse)
+async def list_extractions(
+    repo: Annotated[ExtractionRepository, Depends(get_repo)],
+) -> ExtractionListResponse:
+    docs = await repo.find_all()
+    items = [_doc_to_detail(d) for d in docs]
+    return ExtractionListResponse(items=items)
+
+
+@router.get("/extractions/{id}", response_model=ExtractionDetailResponse)
+async def get_extraction(
+    extraction_id: Annotated[str, Path(alias="id")],
+    repo: Annotated[ExtractionRepository, Depends(get_repo)],
+) -> ExtractionDetailResponse:
+    if not _is_valid_object_id(extraction_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    doc = await repo.find_by_id(extraction_id)
+    if doc is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return _doc_to_detail(doc)
+
+
+@router.patch("/extractions/{id}", response_model=ExtractionUpdateResponse)
+async def update_extraction(
+    extraction_id: Annotated[str, Path(alias="id")],  # noqa: A002
+    body: ExtractionUpdateRequest,
+    repo: Annotated[ExtractionRepository, Depends(get_repo)],
+) -> ExtractionUpdateResponse:
+    if not _is_valid_object_id(extraction_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    payload = body.model_dump(exclude_unset=True)
+    if not payload:
+        doc = await repo.find_by_id(extraction_id)
+        if doc is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+        return ExtractionUpdateResponse(
+            id=doc["id"],
+            filename=doc.get("filename"),
+            content_type=doc["content_type"],
+            size_bytes=doc["size_bytes"],
+            extracted_text=doc["extracted_text"],
+            status=doc["status"],
+            created_at=doc["created_at"],
+            updated_at=doc.get("updated_at"),
+        )
+    updated = await repo.update(extraction_id, payload)
+    if updated is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    return ExtractionUpdateResponse(
+        id=updated["id"],
+        filename=updated.get("filename"),
+        content_type=updated["content_type"],
+        size_bytes=updated["size_bytes"],
+        extracted_text=updated["extracted_text"],
+        status=updated["status"],
+        created_at=updated["created_at"],
+        updated_at=updated.get("updated_at"),
+    )
+
+
+@router.delete("/extractions/{id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_extraction(
+    extraction_id: Annotated[str, Path(alias="id")],  # noqa: A002
+    repo: Annotated[ExtractionRepository, Depends(get_repo)],
+) -> None:
+    if not _is_valid_object_id(extraction_id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")
+    deleted = await repo.soft_delete(extraction_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")

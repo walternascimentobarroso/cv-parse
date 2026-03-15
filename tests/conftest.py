@@ -7,6 +7,7 @@ Shared test configuration and fixtures.
 """
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from contextlib import asynccontextmanager
 
 import pytest
@@ -17,11 +18,17 @@ from src.api.routes import router as api_router
 from src.infra.extractors.registry import ExtractorRegistry
 
 
+def _make_oid(i: int) -> str:
+    """Format counter as 24-char hex for tests."""
+    return f"{i:024x}"
+
+
 class InMemoryExtractionRepository:
     """In-memory double for ExtractionRepository; no real DB required."""
 
     def __init__(self) -> None:
-        self.saved: list[dict[str, object]] = []
+        self._counter = 0
+        self._docs: dict[str, dict] = {}
 
     async def save_extraction(
         self,
@@ -32,15 +39,56 @@ class InMemoryExtractionRepository:
         extracted_text: str,
         status: str = "success",
     ) -> str:
+        self._counter += 1
+        oid = _make_oid(self._counter)
+        now = datetime.now(UTC)
         record = {
+            "_id": oid,
             "filename": filename,
             "content_type": content_type,
             "size_bytes": size_bytes,
             "extracted_text": extracted_text,
             "status": status,
+            "created_at": now,
+            "updated_at": None,
+            "deleted_at": None,
         }
-        self.saved.append(record)
-        return str(len(self.saved))
+        self._docs[oid] = record
+        return oid
+
+    def _to_response(self, doc: dict) -> dict:
+        out = dict(doc)
+        out["id"] = out.pop("_id", "")
+        return out
+
+    async def find_by_id(self, extraction_id: str) -> dict | None:
+        doc = self._docs.get(extraction_id)
+        if doc is None or doc.get("deleted_at") is not None:
+            return None
+        return self._to_response(doc)
+
+    async def find_all(self) -> list[dict]:
+        return [
+            self._to_response(d)
+            for d in self._docs.values()
+            if d.get("deleted_at") is None
+        ]
+
+    async def update(self, extraction_id: str, payload: dict) -> dict | None:
+        doc = self._docs.get(extraction_id)
+        if doc is None or doc.get("deleted_at") is not None:
+            return None
+        for key, value in payload.items():
+            doc[key] = value
+        doc["updated_at"] = datetime.now(UTC)
+        return self._to_response(doc)
+
+    async def soft_delete(self, extraction_id: str) -> bool:
+        doc = self._docs.get(extraction_id)
+        if doc is None or doc.get("deleted_at") is not None:
+            return False
+        doc["deleted_at"] = datetime.now(UTC)
+        return True
 
 
 @asynccontextmanager
