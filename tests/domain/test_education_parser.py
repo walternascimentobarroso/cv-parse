@@ -105,3 +105,46 @@ def test_education_entry_dataclass_defaults() -> None:
         raise AssertionError(f"Expected None defaults, got {entry!r}")
     if entry.start_year is not None or entry.end_year is not None:
         raise AssertionError(f"Expected None year defaults, got {entry!r}")
+
+
+def test_parse_education_two_blocks_separated_by_header_line() -> None:
+    """Two blocks separated by a line that looks like education header (no blank line) trigger block yield."""
+    text = "University A, BSc 2015-2019\nCollege B, MSc 2019-2021"
+    result = parse_education_section(text)
+    if len(result) != 2:
+        raise AssertionError(f"Expected 2 entries, got {len(result)}")
+    if result[0].get("end_year") != "2019" or result[1].get("end_year") != "2021":
+        raise AssertionError(f"Expected two blocks with years, got {result!r}")
+
+
+def test_parse_education_month_year_range() -> None:
+    """Month-year range (e.g. Jan 2018 - Dec 2022) is parsed."""
+    text = "State University, Master Jan 2018 - Dec 2022"
+    result = parse_education_section(text)
+    if len(result) != 1:
+        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+    if result[0].get("start_year") != "2018" or result[0].get("end_year") != "2022":
+        raise AssertionError(f"Expected 2018-2022 from month-year range, got {result[0]!r}")
+
+
+def test_parse_education_header_only_years_no_text() -> None:
+    """Line with only year range (no degree/institution text) produces one entry with empty institution/degree."""
+    text = "2018 - 2022"
+    result = parse_education_section(text)
+    if len(result) != 1:
+        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+    if result[0].get("start_year") != "2018" or result[0].get("end_year") != "2022":
+        raise AssertionError(f"Expected years 2018-2022, got {result[0]!r}")
+
+
+def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
+    """When degree token ends with institution keyword and there are rest_lines, split degree and set institution from last word."""
+    text = "Master University 2018 - 2022\nFaculty of Engineering"
+    result = parse_education_section(text)
+    if len(result) != 1:
+        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+    entry = result[0]
+    if entry.get("degree") != "Master":
+        raise AssertionError(f"Expected degree 'Master', got {entry.get('degree')!r}")
+    if "University" not in (entry.get("institution") or ""):
+        raise AssertionError(f"Expected institution to contain University and rest, got {entry.get('institution')!r}")

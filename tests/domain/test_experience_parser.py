@@ -2,6 +2,7 @@
 
 from src.domain.experience_parser import (
     ExperienceEntry,
+    _has_company_hint,
     parse_experience_section,
 )
 
@@ -136,3 +137,18 @@ def test_experience_entry_dataclass_defaults() -> None:
         raise AssertionError(f"Expected None defaults, got {entry!r}")
     if entry.start_date is not None or entry.end_date is not None or entry.description is not None:
         raise AssertionError(f"Expected None defaults, got {entry!r}")
+
+
+def test_has_company_hint_empty_returns_false() -> None:
+    if _has_company_hint("") is not False:
+        raise AssertionError("Expected _has_company_hint('') to return False")
+
+
+def test_parse_experience_two_blocks_separated_by_header_line() -> None:
+    """Two blocks separated by a new header line (no blank line) trigger block yield."""
+    text = "Role A at Company X 2018 - 2019\nRole B at Company Y 2019 - 2021"
+    result = parse_experience_section(text)
+    if len(result) != 2:
+        raise AssertionError(f"Expected 2 entries, got {len(result)}")
+    if result[0].get("end_date") != "2019" or result[1].get("end_date") != "2021":
+        raise AssertionError(f"Expected two blocks with dates, got {result!r}")
