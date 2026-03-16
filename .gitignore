@@ -16,7 +16,7 @@ build/
 .coverage
 htmlcov/
 
-.vscode/
+# .vscode/launch.json is committed for debug setup (see README § Debug)
 .idea/
 
 #Ignore cursor AI rules

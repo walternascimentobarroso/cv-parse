@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     mongodb_uri: str = "mongodb://mongodb:27017"
     mongodb_db: str = "doctotext"
     extractions_collection: str = Field(default="extractions", alias="EXTRACTIONS_COLLECTION")
+    # Consumed from env so Pydantic allows it; actual use is in docker-entrypoint.sh
+    debugpy: str = Field(default="", alias="DEBUGPY")
     mime_type_pdf: str = Field(default="application/pdf", alias="MIME_TYPE_PDF")
     mime_type_plain: str = Field(default="text/plain", alias="MIME_TYPE_PLAIN")
     max_document_size_bytes: int = 10 * 1024 * 1024

@@ -5,6 +5,10 @@ services:
       - .env
     ports:
       - "8000:8000"
+      # Debug (debugpy): expose when DEBUGPY=1 in environment
+      - "5678:5678"
+    environment:
+      - DEBUGPY=${DEBUGPY:-}
     volumes:
       - .:/app
       - api_venv:/app/.venv

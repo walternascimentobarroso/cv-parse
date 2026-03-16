@@ -61,7 +61,11 @@ async def extract_text(
     extractor: Annotated[DocumentExtractor, Depends(get_extractor)],
     file: Annotated[UploadFile | None, File(description="Document file")] = None,
 ) -> ExtractResponse:
-    logger.info("extract_upload_attempt", extra={"filename": file.filename if file else None})
+
+    logger.info(
+        "extract_upload_attempt",
+        extra={"upload_filename": file.filename if file else None},
+    )
     result = await validate_upload(file, settings)
 
     if isinstance(result, ValidationError):

@@ -5,6 +5,7 @@ description = "Doc-to-text API with improved development environment and tooling
 requires-python = ">=3.12"
 
 dependencies = [
+    "debugpy",
     "fastapi",
     "uvicorn[standard]",
     "motor",

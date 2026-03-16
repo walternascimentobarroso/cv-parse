@@ -47,6 +47,7 @@ jobs:
 
       - name: SonarCloud Scan
         # Pinned to full-length commit SHA (was @v2)
+        # nosemgrep - false positive: commit SHA of the action, not an API key
         uses: SonarSource/sonarcloud-github-action@e44258b109568baa0df60ed515909fc6c72cba92
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
