@@ -44,6 +44,7 @@ class ExtractionDetailResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime | None
+    deleted_at: datetime | None
 
 
 class ExtractionListResponse(BaseModel):
@@ -69,6 +70,7 @@ class ExtractionUpdateResponse(BaseModel):
     status: str
     created_at: datetime
     updated_at: datetime | None
+    deleted_at: datetime | None
 
 
 class ErrorDetail(BaseModel):

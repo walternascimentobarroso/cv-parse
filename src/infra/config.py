@@ -31,8 +31,8 @@ def _parse_allowed_content_types(v: str) -> list[str]:
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    mongodb_uri: str = "mongodb://mongodb:27017"
-    mongodb_db: str = "doctotext"
+    mongodb_uri: str = Field(alias="MONGODB_URI")
+    mongodb_db: str = Field(alias="MONGODB_DB")
     extractions_collection: str = Field(default="extractions", alias="EXTRACTIONS_COLLECTION")
     # Consumed from env so Pydantic allows it; actual use is in docker-entrypoint.sh
     debugpy: str = Field(default="", alias="DEBUGPY")

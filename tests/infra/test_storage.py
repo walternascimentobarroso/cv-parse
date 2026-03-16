@@ -23,6 +23,7 @@ def mock_collection():
     col.find = MagicMock()
     col.find_one_and_update = AsyncMock()
     col.update_one = AsyncMock()
+    col.delete_one = AsyncMock()
     return col
 
 
@@ -45,8 +46,8 @@ def test_save_extraction_sets_audit_fields(repo: ExtractionRepository, mock_coll
     call_args = mock_collection.insert_one.call_args[0][0]
     if "created_at" not in call_args:
         raise AssertionError("Expected created_at in inserted document")
-    if call_args.get("updated_at") is not None:
-        raise AssertionError("Expected updated_at to be None on insert")
+    if call_args.get("updated_at") is None:
+        raise AssertionError("Expected updated_at to be set on insert")
     if call_args.get("deleted_at") is not None:
         raise AssertionError("Expected deleted_at to be None on insert")
 
@@ -142,6 +143,74 @@ def test_soft_delete_returns_true_when_document_updated(repo: ExtractionReposito
     result = _run(repo.soft_delete("507f1f77bcf86cd799439011"))
     if result is not True:
         raise AssertionError(f"Expected True for successful soft delete, got {result!r}")
+
+
+def test_restore_returns_false_for_invalid_id(repo: ExtractionRepository) -> None:
+    result = _run(repo.restore("bad-id"))
+    if result != "not_found":
+        raise AssertionError(f"Expected 'not_found' for invalid id, got {result!r}")
+
+
+def test_restore_returns_not_deleted_when_active(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.find_one.return_value = {
+        "_id": "507f1f77bcf86cd799439011",
+        "deleted_at": None,
+    }
+    result = _run(repo.restore("507f1f77bcf86cd799439011"))
+    if result != "not_deleted":
+        raise AssertionError(f"Expected 'not_deleted' when record is not soft deleted, got {result!r}")
+
+
+def test_restore_returns_restored_when_document_updated(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.find_one.return_value = {
+        "_id": "507f1f77bcf86cd799439011",
+        "deleted_at": "some-timestamp",
+    }
+    mock_collection.update_one.return_value = MagicMock(modified_count=1)
+    result = _run(repo.restore("507f1f77bcf86cd799439011"))
+    if result != "restored":
+        raise AssertionError(f"Expected 'restored' for successful restore, got {result!r}")
+
+
+def test_restore_returns_not_found_when_document_missing_before_update(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
+    """If find_one returns None for a valid id, restore should return 'not_found'."""
+    mock_collection.find_one.return_value = None
+    result = _run(repo.restore("507f1f77bcf86cd799439011"))
+    if result != "not_found":
+        raise AssertionError(f"Expected 'not_found' when document is missing, got {result!r}")
+
+
+def test_restore_returns_not_found_when_update_does_not_modify(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
+    """If update_one modifies no documents, restore should return 'not_found'."""
+    mock_collection.find_one.return_value = {
+        "_id": "507f1f77bcf86cd799439011",
+        "deleted_at": "some-timestamp",
+    }
+    mock_collection.update_one.return_value = MagicMock(modified_count=0)
+    result = _run(repo.restore("507f1f77bcf86cd799439011"))
+    if result != "not_found":
+        raise AssertionError(
+            f"Expected 'not_found' when update_one.modified_count == 0, got {result!r}",
+        )
+
+
+def test_force_delete_returns_false_for_invalid_id(repo: ExtractionRepository) -> None:
+    result = _run(repo.force_delete("bad-id"))
+    if result is not False:
+        raise AssertionError(f"Expected False for invalid id, got {result!r}")
+
+
+def test_force_delete_returns_true_when_document_deleted(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.delete_one.return_value = MagicMock(deleted_count=1)
+    result = _run(repo.force_delete("507f1f77bcf86cd799439011"))
+    if result is not True:
+        raise AssertionError(f"Expected True for successful force delete, got {result!r}")
 
 
 def test_create_motor_client_returns_client() -> None:

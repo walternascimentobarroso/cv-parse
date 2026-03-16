@@ -51,7 +51,7 @@ class InMemoryExtractionRepository:
             "extracted_text": extracted_text,
             "status": status,
             "created_at": now,
-            "updated_at": None,
+            "updated_at": now,
             "deleted_at": None,
         }
         self._docs[oid] = record
@@ -88,7 +88,26 @@ class InMemoryExtractionRepository:
         doc = self._docs.get(extraction_id)
         if doc is None or doc.get("deleted_at") is not None:
             return False
-        doc["deleted_at"] = datetime.now(UTC)
+        now = datetime.now(UTC)
+        doc["deleted_at"] = now
+        doc["updated_at"] = now
+        return True
+
+    async def restore(self, extraction_id: str) -> str:
+        doc = self._docs.get(extraction_id)
+        if doc is None:
+            return "not_found"
+        if doc.get("deleted_at") is None:
+            return "not_deleted"
+        now = datetime.now(UTC)
+        doc["deleted_at"] = None
+        doc["updated_at"] = now
+        return "restored"
+
+    async def force_delete(self, extraction_id: str) -> bool:
+        if extraction_id not in self._docs:
+            return False
+        del self._docs[extraction_id]
         return True
 
 

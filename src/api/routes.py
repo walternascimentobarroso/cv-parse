@@ -46,6 +46,7 @@ def _doc_to_detail(doc: dict) -> ExtractionDetailResponse:
         status=doc["status"],
         created_at=doc["created_at"],
         updated_at=doc.get("updated_at"),
+        deleted_at=doc.get("deleted_at"),
     )
 
 
@@ -163,6 +164,7 @@ async def update_extraction(
             status=doc["status"],
             created_at=doc["created_at"],
             updated_at=doc.get("updated_at"),
+            deleted_at=doc.get("deleted_at"),
         )
     updated = await repo.update(id, payload)
     if updated is None:
@@ -176,6 +178,7 @@ async def update_extraction(
         status=updated["status"],
         created_at=updated["created_at"],
         updated_at=updated.get("updated_at"),
+        deleted_at=updated.get("deleted_at"),
     )
 
 
@@ -189,3 +192,39 @@ async def delete_extraction(
     deleted = await repo.soft_delete(id)
     if not deleted:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    logger.info("extraction_soft_deleted", extra={"record_id": id})
+
+
+@router.post("/extractions/{id}/restore")
+async def restore_extraction(
+    id: Annotated[str, Path()],  # noqa: A002  # pylint: disable=redefined-builtin
+    repo: Annotated[ExtractionRepository, Depends(get_repo)],
+) -> ExtractionDetailResponse:
+    if not _is_valid_object_id(id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    result = await repo.restore(id)
+    if result == "not_found":
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    if result == "not_deleted":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Extraction is not deleted.",
+        )
+    logger.info("extraction_restored", extra={"record_id": id})
+    doc = await repo.find_by_id(id)
+    if doc is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    return _doc_to_detail(doc)
+
+
+@router.delete("/extractions/{id}/force", status_code=status.HTTP_204_NO_CONTENT)
+async def force_delete_extraction(
+    id: Annotated[str, Path()],  # noqa: A002  # pylint: disable=redefined-builtin
+    repo: Annotated[ExtractionRepository, Depends(get_repo)],
+) -> None:
+    if not _is_valid_object_id(id):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    deleted = await repo.force_delete(id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=MSG_NOT_FOUND)
+    logger.info("extraction_force_deleted", extra={"record_id": id})

@@ -197,6 +197,59 @@ def test_crud_extraction_flow(client: TestClient) -> None:
         raise AssertionError(f"Expected 404 on second DELETE, got {delete_again_resp.status_code}")
 
 
+def test_restore_soft_deleted_extraction(client: TestClient) -> None:
+    files = {"file": ("test.txt", b"restore test", "text/plain")}
+    create_resp = client.post("/extract", files=files)
+    if create_resp.status_code != 200:
+        raise AssertionError(f"Expected 200 on create, got {create_resp.status_code}")
+    extraction_id = create_resp.json()["id"]
+
+    delete_resp = client.delete(f"/extractions/{extraction_id}")
+    if delete_resp.status_code != 204:
+        raise AssertionError(f"Expected 204 on DELETE, got {delete_resp.status_code}")
+
+    restore_resp = client.post(f"/extractions/{extraction_id}/restore")
+    if restore_resp.status_code != 200:
+        raise AssertionError(f"Expected 200 on restore, got {restore_resp.status_code}")
+    restored = restore_resp.json()
+    if restored["id"] != extraction_id:
+        raise AssertionError(f"Expected restored id {extraction_id}, got {restored['id']}")
+    if restored.get("deleted_at") is not None:
+        raise AssertionError("Expected deleted_at to be null after restore")
+
+
+def test_restore_non_deleted_extraction_returns_400(client: TestClient) -> None:
+    files = {"file": ("test.txt", b"not deleted", "text/plain")}
+    create_resp = client.post("/extract", files=files)
+    if create_resp.status_code != 200:
+        raise AssertionError(f"Expected 200 on create, got {create_resp.status_code}")
+    extraction_id = create_resp.json()["id"]
+
+    restore_resp = client.post(f"/extractions/{extraction_id}/restore")
+    if restore_resp.status_code != 400:
+        raise AssertionError(f"Expected 400 when restoring non-deleted record, got {restore_resp.status_code}")
+
+
+def test_force_delete_extraction(client: TestClient) -> None:
+    files = {"file": ("test.txt", b"force delete", "text/plain")}
+    create_resp = client.post("/extract", files=files)
+    if create_resp.status_code != 200:
+        raise AssertionError(f"Expected 200 on create, got {create_resp.status_code}")
+    extraction_id = create_resp.json()["id"]
+
+    force_resp = client.delete(f"/extractions/{extraction_id}/force")
+    if force_resp.status_code != 204:
+        raise AssertionError(f"Expected 204 on force delete, got {force_resp.status_code}")
+
+    get_after_resp = client.get(f"/extractions/{extraction_id}")
+    if get_after_resp.status_code != 404:
+        raise AssertionError(f"Expected 404 after force delete, got {get_after_resp.status_code}")
+
+    restore_after_resp = client.post(f"/extractions/{extraction_id}/restore")
+    if restore_after_resp.status_code != 404:
+        raise AssertionError(f"Expected 404 when restoring force-deleted record, got {restore_after_resp.status_code}")
+
+
 def test_update_extraction_invalid_id_returns_404(client: TestClient) -> None:
     response = client.patch("/extractions/not-a-valid-id", json={"extracted_text": "x"})
     if response.status_code != 404:
@@ -250,3 +303,53 @@ def test_update_extraction_empty_body_not_found_returns_404(client: TestClient) 
     response = client.patch("/extractions/ffffffffffffffffffffffff", json={})
     if response.status_code != 404:
         raise AssertionError(f"Expected 404 when empty body and document not found, got {response.status_code}")
+
+
+def test_restore_invalid_id_returns_404(client: TestClient) -> None:
+    response = client.post("/extractions/not-a-valid-id/restore")
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 for invalid id on restore, got {response.status_code}")
+
+
+def test_restore_not_found_returns_404(client: TestClient) -> None:
+    response = client.post("/extractions/ffffffffffffffffffffffff/restore")
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 when restoring non-existent id, got {response.status_code}")
+
+
+def test_restore_404_when_document_missing_after_restore(client: TestClient, monkeypatch: object) -> None:
+    """Simulate repo.restore succeeding but repo.find_by_id returning None."""
+    app = client.app
+    repo = app.state.extraction_repo
+
+    async def fake_restore(extraction_id: str) -> str:  # type: ignore[override]
+        return "restored"
+
+    async def fake_find_by_id(extraction_id: str) -> None:  # type: ignore[override]
+        return None
+
+    original_restore = repo.restore
+    original_find_by_id = repo.find_by_id
+    repo.restore = fake_restore  # type: ignore[assignment]
+    repo.find_by_id = fake_find_by_id  # type: ignore[assignment]
+    try:
+        response = client.post("/extractions/ffffffffffffffffffffffff/restore")
+        if response.status_code != 404:
+            raise AssertionError(
+                f"Expected 404 when repo.find_by_id returns None after restore, got {response.status_code}",
+            )
+    finally:
+        repo.restore = original_restore  # type: ignore[assignment]
+        repo.find_by_id = original_find_by_id  # type: ignore[assignment]
+
+
+def test_force_delete_invalid_id_returns_404(client: TestClient) -> None:
+    response = client.delete("/extractions/not-a-valid-id/force")
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 for invalid id on force delete, got {response.status_code}")
+
+
+def test_force_delete_not_found_returns_404(client: TestClient) -> None:
+    response = client.delete("/extractions/ffffffffffffffffffffffff/force")
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 for non-existent id on force delete, got {response.status_code}")

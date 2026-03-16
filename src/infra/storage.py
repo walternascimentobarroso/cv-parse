@@ -33,14 +33,15 @@ class ExtractionRepository:
         extracted_text: str,
         status: str = "success",
     ) -> str:
+        now = datetime.now(UTC)
         record = ExtractionRecord(
             filename=filename,
             content_type=content_type,
             size_bytes=size_bytes,
             extracted_text=extracted_text,
             status=status,
-            created_at=datetime.now(UTC),
-            updated_at=None,
+            created_at=now,
+            updated_at=now,
             deleted_at=None,
         )
         result = await self._collection.insert_one(record.to_mongo())
@@ -84,11 +85,45 @@ class ExtractionRepository:
         except (InvalidId, TypeError):
             return False
         query = {"_id": oid, **ACTIVE_FILTER}
+        now = datetime.now(UTC)
         result = await self._collection.update_one(
             query,
-            {"$set": {"deleted_at": datetime.now(UTC)}},
+            {"$set": {"deleted_at": now, "updated_at": now}},
         )
         return result.modified_count == 1
+
+    async def restore(self, extraction_id: str) -> str:
+        """Restore a soft-deleted extraction.
+
+        Returns one of: 'restored', 'not_found', 'not_deleted'.
+        """
+        try:
+            oid = ObjectId(extraction_id)
+        except (InvalidId, TypeError):
+            return "not_found"
+
+        doc = await self._collection.find_one({"_id": oid})
+        if doc is None:
+            return "not_found"
+        if doc.get("deleted_at") is None:
+            return "not_deleted"
+
+        now = datetime.now(UTC)
+        result = await self._collection.update_one(
+            {"_id": oid},
+            {"$set": {"deleted_at": None, "updated_at": now}},
+        )
+        if result.modified_count != 1:
+            return "not_found"
+        return "restored"
+
+    async def force_delete(self, extraction_id: str) -> bool:
+        try:
+            oid = ObjectId(extraction_id)
+        except (InvalidId, TypeError):
+            return False
+        result = await self._collection.delete_one({"_id": oid})
+        return result.deleted_count == 1
 
 
 def create_motor_client(uri: str) -> AsyncIOMotorClient:
