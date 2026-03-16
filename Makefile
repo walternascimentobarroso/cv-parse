@@ -27,7 +27,7 @@ run:
 	uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
 
 test:
-	docker compose run --rm api uv run pytest tests/
+	docker compose exec api uv run pytest --cov=src --cov-report=term-missing tests/
 
 test-unit:
 	uv run pytest tests/domain/

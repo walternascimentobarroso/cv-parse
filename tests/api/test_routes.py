@@ -3,6 +3,8 @@
 from fastapi.testclient import TestClient
 
 from src.api.dependencies import get_extractor
+from src.infra.config import Settings
+from src.services.upload_validator import ValidationOk
 
 
 def test_health(client: TestClient) -> None:
@@ -59,6 +61,32 @@ def test_extract_too_large(client: TestClient) -> None:
         raise AssertionError(f"Expected status 413, got {response.status_code}")
     if "Document exceeds maximum allowed size" not in response.json()["detail"]:
         raise AssertionError(f"Expected size error in detail: {response.json()['detail']}")
+
+
+def test_extract_zero_size_short_circuits(client: TestClient, monkeypatch: object) -> None:
+    """When validator returns size_bytes == 0, route should return empty ExtractResponse."""
+
+    async def fake_validate_upload(file, settings: Settings) -> ValidationOk:  # type: ignore[override]
+        return ValidationOk(
+            content=b"",
+            content_type="text/plain",
+            filename="empty.txt",
+            size_bytes=0,
+        )
+
+    import src.api.routes as routes_module
+
+    monkeypatch.setattr(routes_module, "validate_upload", fake_validate_upload)
+
+    files = {"file": ("empty.txt", b"", "text/plain")}
+    response = client.post("/extract", files=files)
+    if response.status_code != 200:
+        raise AssertionError(f"Expected status 200, got {response.status_code}")
+    body = response.json()
+    if body["text"] != "":
+        raise AssertionError(f"Expected empty text, got {body['text']!r}")
+    if body["id"] != "":
+        raise AssertionError(f"Expected empty id for zero-size, got {body['id']!r}")
 
 
 def test_extract_internal_error(client: TestClient) -> None:
@@ -167,3 +195,58 @@ def test_crud_extraction_flow(client: TestClient) -> None:
     delete_again_resp = client.delete(f"/extractions/{extraction_id}")
     if delete_again_resp.status_code != 404:
         raise AssertionError(f"Expected 404 on second DELETE, got {delete_again_resp.status_code}")
+
+
+def test_update_extraction_invalid_id_returns_404(client: TestClient) -> None:
+    response = client.patch("/extractions/not-a-valid-id", json={"extracted_text": "x"})
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 for invalid id, got {response.status_code}")
+
+
+def test_update_extraction_empty_body_uses_existing_document(client: TestClient) -> None:
+    files = {"file": ("test.txt", b"unchanged", "text/plain")}
+    create_resp = client.post("/extract", files=files)
+    if create_resp.status_code != 200:
+        raise AssertionError(f"Expected 200 on create, got {create_resp.status_code}")
+    extraction_id = create_resp.json()["id"]
+
+    patch_resp = client.patch(f"/extractions/{extraction_id}", json={})
+    if patch_resp.status_code != 200:
+        raise AssertionError(f"Expected 200 on PATCH with empty body, got {patch_resp.status_code}")
+    data = patch_resp.json()
+    if data["id"] != extraction_id:
+        raise AssertionError(f"Expected same id in response, got {data['id']!r}")
+
+
+def test_update_extraction_not_found_after_valid_id(client: TestClient, monkeypatch: object) -> None:
+    """Simulate repo.update returning None to exercise 404 branch."""
+    app = client.app
+    repo = app.state.extraction_repo
+
+    async def fake_update(extraction_id: str, payload: dict):  # type: ignore[override]
+        return None
+
+    original_update = repo.update
+    repo.update = fake_update  # type: ignore[assignment]
+    try:
+        response = client.patch(
+            "/extractions/ffffffffffffffffffffffff",
+            json={"extracted_text": "x"},
+        )
+        if response.status_code != 404:
+            raise AssertionError(f"Expected 404 when repo.update returns None, got {response.status_code}")
+    finally:
+        repo.update = original_update  # type: ignore[assignment]
+
+
+def test_delete_extraction_invalid_id_returns_404(client: TestClient) -> None:
+    response = client.delete("/extractions/not-a-valid-id")
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 for invalid id, got {response.status_code}")
+
+
+def test_update_extraction_empty_body_not_found_returns_404(client: TestClient) -> None:
+    """Empty body with non-existent but valid id should yield 404."""
+    response = client.patch("/extractions/ffffffffffffffffffffffff", json={})
+    if response.status_code != 404:
+        raise AssertionError(f"Expected 404 when empty body and document not found, got {response.status_code}")

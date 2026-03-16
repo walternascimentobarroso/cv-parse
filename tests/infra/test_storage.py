@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.infra.storage import ExtractionRepository
+from src.infra.storage import ExtractionRepository, create_motor_client
 
 
 def _run(coro):
@@ -90,3 +90,64 @@ def test_soft_delete_returns_false_for_invalid_id(repo: ExtractionRepository) ->
     result = _run(repo.soft_delete("bad-id"))
     if result is not False:
         raise AssertionError(f"Expected False for invalid id, got {result!r}")
+
+
+def test_update_returns_none_when_document_not_found(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.find_one_and_update.return_value = None
+    result = _run(repo.update("507f1f77bcf86cd799439011", {"extracted_text": "x"}))
+    if result is not None:
+        raise AssertionError(f"Expected None when find_one_and_update returns None, got {result!r}")
+
+
+def test_find_by_id_returns_document_when_found(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.find_one.return_value = {
+        "_id": "507f1f77bcf86cd799439011",
+        "filename": "test.pdf",
+        "content_type": "application/pdf",
+        "size_bytes": 100,
+        "extracted_text": "text",
+        "status": "success",
+        "created_at": "now",
+        "updated_at": None,
+        "deleted_at": None,
+    }
+    result = _run(repo.find_by_id("507f1f77bcf86cd799439011"))
+    if result is None:
+        raise AssertionError("Expected a document to be returned")
+    if result.get("id") != "507f1f77bcf86cd799439011":
+        raise AssertionError(f"Expected id to be stringified _id, got {result.get('id')!r}")
+
+
+def test_update_returns_document_when_found(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.find_one_and_update.return_value = {
+        "_id": "507f1f77bcf86cd799439011",
+        "filename": "test.pdf",
+        "content_type": "application/pdf",
+        "size_bytes": 100,
+        "extracted_text": "updated",
+        "status": "success",
+        "created_at": "now",
+        "updated_at": None,
+        "deleted_at": None,
+    }
+    result = _run(repo.update("507f1f77bcf86cd799439011", {"extracted_text": "updated"}))
+    if result is None:
+        raise AssertionError("Expected updated document")
+    if result.get("extracted_text") != "updated":
+        raise AssertionError(f"Expected updated text, got {result.get('extracted_text')!r}")
+
+
+def test_soft_delete_returns_true_when_document_updated(repo: ExtractionRepository, mock_collection) -> None:
+    mock_collection.update_one.return_value = MagicMock(modified_count=1)
+    result = _run(repo.soft_delete("507f1f77bcf86cd799439011"))
+    if result is not True:
+        raise AssertionError(f"Expected True for successful soft delete, got {result!r}")
+
+
+def test_create_motor_client_returns_client() -> None:
+    client = create_motor_client("mongodb://localhost:27017")
+    # Motor client connects lazily; just check type and close.
+    module_name = type(client).__module__
+    if "motor" not in module_name:
+        raise AssertionError(f"Expected motor client, got module {module_name!r}")
+    client.close()
