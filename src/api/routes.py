@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import re
+from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 
 from src.api.dependencies import get_extractor, get_repo
+from src.domain.cv_parser import parse_cv
 from src.domain.document_extractor_contracts import DocumentExtractor
 from src.infra.config import Settings, get_settings
 from src.infra.logging_config import get_logger
@@ -47,6 +49,7 @@ def _doc_to_detail(doc: dict) -> ExtractionDetailResponse:
         created_at=doc["created_at"],
         updated_at=doc.get("updated_at"),
         deleted_at=doc.get("deleted_at"),
+        parsed_data=doc.get("parsed_data"),
     )
 
 
@@ -88,12 +91,15 @@ async def extract_text(
             result.content,
             result.content_type,
         )
+        parsed = parse_cv(extracted_text)
+        parsed_data = asdict(parsed)
         record_id = await repo.save_extraction(
             filename=result.filename,
             content_type=result.content_type,
             size_bytes=result.size_bytes,
             extracted_text=extracted_text,
             status="success",
+            parsed_data=parsed_data,
         )
         logger.info(
             "extraction_success",
@@ -117,6 +123,7 @@ async def extract_text(
         text=extracted_text,
         id=record_id,
         format=result.content_type or "",
+        parsed_data=parsed_data,
     )
 
 
@@ -165,6 +172,7 @@ async def update_extraction(
             created_at=doc["created_at"],
             updated_at=doc.get("updated_at"),
             deleted_at=doc.get("deleted_at"),
+            parsed_data=doc.get("parsed_data"),
         )
     updated = await repo.update(id, payload)
     if updated is None:
@@ -179,6 +187,7 @@ async def update_extraction(
         created_at=updated["created_at"],
         updated_at=updated.get("updated_at"),
         deleted_at=updated.get("deleted_at"),
+        parsed_data=updated.get("parsed_data"),
     )
 
 

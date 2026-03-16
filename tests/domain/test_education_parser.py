@@ -26,12 +26,9 @@ def test_parse_education_single_block_with_year_range() -> None:
     entry = result[0]
     if entry.get("start_year") != "2018" or entry.get("end_year") != "2022":
         raise AssertionError(f"Expected year range 2018-2022, got {entry!r}")
-    if not entry.get("institution") or "London" not in entry.get("institution", ""):
+    if "London" not in (entry.get("institution") or ""):
         raise AssertionError(f"Expected institution with London, got {entry!r}")
-    if not entry.get("degree") or "BSc" in entry.get("degree", "") or "Computer" in entry.get("degree", ""):
-        # degree may be parsed as BSc or similar
-        pass
-    if entry.get("degree") is None:
+    if not entry.get("degree"):
         raise AssertionError(f"Expected degree, got {entry!r}")
 
 

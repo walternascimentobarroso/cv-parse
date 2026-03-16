@@ -5,6 +5,10 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+# Shape of parsed_data stored and returned by the API (experience, education, skills, certifications).
+ParsedDataDict = dict[str, object]
+
+
 class ExtractionRecord(BaseModel):
     filename: str | None
     content_type: str
@@ -14,6 +18,7 @@ class ExtractionRecord(BaseModel):
     created_at: datetime
     updated_at: datetime | None = None
     deleted_at: datetime | None = None
+    parsed_data: ParsedDataDict | None = None
 
     def to_mongo(self) -> dict[str, object]:
         return self.model_dump()
@@ -31,6 +36,7 @@ class ExtractResponse(BaseModel):
     text: str
     id: str
     format: str
+    parsed_data: ParsedDataDict | None = None
 
 
 class ExtractionDetailResponse(BaseModel):
@@ -45,6 +51,7 @@ class ExtractionDetailResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None
     deleted_at: datetime | None
+    parsed_data: ParsedDataDict | None = None
 
 
 class ExtractionListResponse(BaseModel):
@@ -71,6 +78,7 @@ class ExtractionUpdateResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None
     deleted_at: datetime | None
+    parsed_data: ParsedDataDict | None = None
 
 
 class ErrorDetail(BaseModel):

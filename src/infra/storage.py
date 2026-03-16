@@ -32,6 +32,7 @@ class ExtractionRepository:
         size_bytes: int,
         extracted_text: str,
         status: str = "success",
+        parsed_data: dict[str, object] | None = None,
     ) -> str:
         now = datetime.now(UTC)
         record = ExtractionRecord(
@@ -43,6 +44,7 @@ class ExtractionRepository:
             created_at=now,
             updated_at=now,
             deleted_at=None,
+            parsed_data=parsed_data,
         )
         result = await self._collection.insert_one(record.to_mongo())
         return str(result.inserted_id)

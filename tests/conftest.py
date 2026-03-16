@@ -39,6 +39,7 @@ class InMemoryExtractionRepository:
         size_bytes: int,
         extracted_text: str,
         status: str = "success",
+        parsed_data: dict[str, object] | None = None,
     ) -> str:
         self._counter += 1
         oid = _make_oid(self._counter)
@@ -53,6 +54,7 @@ class InMemoryExtractionRepository:
             "created_at": now,
             "updated_at": now,
             "deleted_at": None,
+            "parsed_data": parsed_data,
         }
         self._docs[oid] = record
         return oid
