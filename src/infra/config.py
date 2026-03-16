@@ -29,6 +29,9 @@ def _parse_allowed_content_types(v: str) -> list[str]:
 
 
 class Settings(BaseSettings):
+    # For tests, prefer .env.test when presente; otherwise fallback to .env.
+    # Pydantic v2 does not support multiple env_file values directly, so we keep
+    # the default here and rely on pytest/CI to point cwd and env correctly.
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
     mongodb_uri: str = Field(alias="MONGODB_URI")
