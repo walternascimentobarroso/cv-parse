@@ -29,14 +29,16 @@ def parse_cv(raw_text: str) -> CvParsedData:
     education = parse_education_section(education_section)
 
     skills_source = "\n".join(
-        part
-        for part in [
-            skills_section,
-            experience_section,
-            education_section,
-            certifications_section,
-        ]
-        if part,
+        (
+            part
+            for part in [
+                skills_section,
+                experience_section,
+                education_section,
+                certifications_section,
+            ]
+            if part
+        )
     )
     skills = extract_skills(skills_source)
 

@@ -31,9 +31,8 @@ def extract_skills(text: str, *, skills_catalog: list[str] | None = None) -> lis
         if not token:
             continue
         needle = token.lower()
-        if needle in lowered_text:
-            if token not in found:
-                found[token] = None
+        if needle in lowered_text and token not in found:
+            found[token] = None
 
     return list(found.keys())
 
