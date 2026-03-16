@@ -30,6 +30,12 @@ _CERTIFICATIONS_HEADINGS = {
     "certifications",
     "licenses",
     "certificates",
+    "licenses & certifications",
+}
+
+_LANGUAGES_HEADINGS = {
+    "languages",
+    "idiomas",
 }
 
 
@@ -47,6 +53,8 @@ def _classify_heading(normalised: str) -> str | None:
         return "skills"
     if normalised in _CERTIFICATIONS_HEADINGS:
         return "certifications"
+    if normalised in _LANGUAGES_HEADINGS:
+        return "languages"
     return None
 
 
@@ -57,6 +65,7 @@ def split_into_sections(raw_text: str) -> SectionMap:
             "education": "",
             "skills": "",
             "certifications": "",
+            "languages": "",
         }
 
     buckets: dict[str, list[str]] = defaultdict(list)
@@ -87,5 +96,6 @@ def split_into_sections(raw_text: str) -> SectionMap:
         "education": "\n".join(buckets.get("education", [])).strip(),
         "skills": "\n".join(buckets.get("skills", [])).strip(),
         "certifications": "\n".join(buckets.get("certifications", [])).strip(),
+        "languages": "\n".join(buckets.get("languages", [])).strip(),
     }
 

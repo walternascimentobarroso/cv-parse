@@ -58,7 +58,25 @@ def test_parse_line_only_bullets_becomes_empty_skipped() -> None:
 
 
 def test_parse_multiple_certifications() -> None:
-    text = "- AWS\n* GCP\n  Oracle DB"
+    """Each line with a bullet starts a new certification."""
+    text = "- AWS\n* GCP\n* Oracle DB"
     result = parse_certifications_section(text)
     if result != ["AWS", "GCP", "Oracle DB"]:
         raise AssertionError(f"Expected three items, got {result!r}")
+
+
+def test_parse_continuation_line_merged_into_previous() -> None:
+    """Lines without a bullet are merged into the previous certification (e.g. PDF wrap)."""
+    text = "● PCAP – Certified Python Programmer 2024 Python\nInstitute"
+    result = parse_certifications_section(text)
+    if len(result) != 1:
+        raise AssertionError(f"Expected 1 item (continuation merged), got {len(result)}: {result!r}")
+    if "Institute" not in result[0]:
+        raise AssertionError(f"Expected 'Institute' merged into cert, got {result[0]!r}")
+
+
+def test_parse_unicode_bullet_stripped() -> None:
+    """Unicode bullet ● (U+25CF) is stripped like • (U+2022)."""
+    result = parse_certifications_section("● AWS Certified")
+    if result != ["AWS Certified"]:
+        raise AssertionError(f"Expected bullet stripped, got {result!r}")

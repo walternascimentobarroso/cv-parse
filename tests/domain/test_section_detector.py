@@ -5,7 +5,13 @@ from src.domain.section_detector import split_into_sections
 
 def test_split_empty_text_returns_empty_sections() -> None:
     result = split_into_sections("")
-    expected = {"experience": "", "education": "", "skills": "", "certifications": ""}
+    expected = {
+        "experience": "",
+        "education": "",
+        "skills": "",
+        "certifications": "",
+        "languages": "",
+    }
     if result != expected:
         raise AssertionError(f"Expected {expected!r}, got {result!r}")
 
@@ -41,7 +47,7 @@ def test_split_skills_heading_variants() -> None:
 
 
 def test_split_certifications_heading_variants() -> None:
-    for heading in ["Certifications", "Licenses", "Certificates"]:
+    for heading in ["Certifications", "Licenses", "Certificates", "Licenses & Certifications"]:
         text = f"{heading}\nAWS Certified"
         result = split_into_sections(text)
         if "AWS Certified" not in result["certifications"]:
@@ -100,3 +106,13 @@ def test_split_leading_empty_lines_then_heading() -> None:
     result = split_into_sections(text)
     if result["experience"] != "Content":
         raise AssertionError(f"Expected 'Content' in experience, got {result['experience']!r}")
+
+
+def test_split_languages_heading_stops_certifications() -> None:
+    """Content after LANGUAGES goes to languages section, not certifications."""
+    text = "Certifications\nAWS Certified\nLanguages\nPortuguese (Native)"
+    result = split_into_sections(text)
+    if "Portuguese" in result["certifications"]:
+        raise AssertionError("Languages content must not appear in certifications")
+    if "Portuguese" not in result["languages"]:
+        raise AssertionError("Languages content must appear in languages section")

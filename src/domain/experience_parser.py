@@ -47,14 +47,21 @@ def _strip_date_segment(text: str) -> str:
     return cleaned.strip(" -–|")
 
 
+def _has_company_hint(text: str) -> bool:
+    if not text:
+        return False
+    return any(hint in text.lower() for hint in _COMPANY_HINTS)
+
+
 def _pick_company(role_candidate: str | None, company_candidate: str | None) -> tuple[str | None, str | None]:
-    role = role_candidate.strip() if role_candidate else ""
-    company = company_candidate.strip() if company_candidate else ""
-    lowered_company = company.lower()
-    if company and any(hint in lowered_company for hint in _COMPANY_HINTS):
-        return role or None, company or None
-    # Fallback: treat second token as role if hints do not match.
-    return company or None, role or None
+    left = role_candidate.strip() if role_candidate else ""
+    right = company_candidate.strip() if company_candidate else ""
+    if right and _has_company_hint(right):
+        return left or None, right or None
+    if left and _has_company_hint(left):
+        return right or None, left or None
+    # Common format is "Role - Company"; without company hints keep left=role, right=company.
+    return left or None, right or None
 
 
 def _split_role_company(text: str) -> tuple[str | None, str | None]:
@@ -66,14 +73,34 @@ def _split_role_company(text: str) -> tuple[str | None, str | None]:
     return value or None, None
 
 
+def _line_has_date_range(line: str) -> bool:
+    start, end = _extract_date_range(line)
+    return start is not None and end is not None
+
+
+def _line_looks_like_experience_header(line: str) -> bool:
+    """True if line has a date range and non-empty role/company text (not just the date)."""
+    if not _line_has_date_range(line):
+        return False
+    header_part = _strip_date_segment(line).strip()
+    if len(header_part) < 2:
+        return False
+    return True
+
+
 def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:
+    """Split into blocks by blank lines or by lines that look like experience headers (date range + role/company)."""
     block: list[str] = []
     for line in lines:
-        if not line.strip():
+        stripped = line.strip()
+        if not stripped:
             if block:
                 yield block
                 block = []
             continue
+        if _line_looks_like_experience_header(stripped) and block:
+            yield block
+            block = []
         block.append(line)
     if block:
         yield block

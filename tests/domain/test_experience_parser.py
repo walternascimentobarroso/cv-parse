@@ -74,16 +74,16 @@ def test_parse_experience_company_hint_ltd() -> None:
         pass
 
 
-def test_parse_experience_no_company_hint_swaps_role_company() -> None:
-    """When right part has no Ltd/Inc etc., fallback assigns left to company, right to role."""
+def test_parse_experience_no_company_hint_keeps_role_company_order() -> None:
+    """When right part has no Ltd/Inc etc., keep common format: left=role, right=company."""
     text = "Developer at SmallCo 2020 - 2021"
     result = parse_experience_section(text)
     if len(result) != 1:
         raise AssertionError(f"Expected 1 entry, got {len(result)}")
-    if result[0].get("company") != "Developer":
-        raise AssertionError(f"Expected company Developer (fallback), got {result[0].get('company')!r}")
-    if result[0].get("role") != "SmallCo":
-        raise AssertionError(f"Expected role SmallCo (fallback), got {result[0].get('role')!r}")
+    if result[0].get("role") != "Developer":
+        raise AssertionError(f"Expected role Developer, got {result[0].get('role')!r}")
+    if result[0].get("company") != "SmallCo":
+        raise AssertionError(f"Expected company SmallCo, got {result[0].get('company')!r}")
 
 
 def test_parse_experience_description_from_rest_of_block() -> None:
