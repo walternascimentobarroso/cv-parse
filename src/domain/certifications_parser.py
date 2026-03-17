@@ -41,11 +41,9 @@ def parse_certifications_section(text: str) -> list[str]:
             if current:
                 results.append(_normalize_certification(" ".join(current)))
             current = [content]
-        else:
-            if current:
-                current.append(content)
-            else:
-                current.append(content)
+            continue
+
+        current.append(content)
 
     if current:
         results.append(_normalize_certification(" ".join(current)))

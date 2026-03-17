@@ -130,16 +130,27 @@ def _build_education_entry(header_line: str, rest_lines: list[str]) -> Education
         if institution_from_header is None and _looks_like_institution(token):
             institution_from_header = token
 
-    if rest_lines:
-        rest_joined = " ".join(part.strip() for part in rest_lines if part.strip()).strip()
-        if degree and not institution_from_header:
-            words = degree.split()
-            if words and _looks_like_institution(words[-1]):
-                institution_from_header = words[-1]
-                degree = " ".join(words[:-1]).strip() or None
-        institution = (f"{institution_from_header or ''} {rest_joined}".strip() if institution_from_header else rest_joined) or None
-    else:
-        institution = institution_from_header or (tokens[0] if tokens else None)
+    if not rest_lines:
+        institution = institution_from_header
+        if institution is None and tokens:
+            institution = tokens[0]
+        return EducationEntry(
+            institution=institution,
+            degree=degree,
+            start_year=start_year,
+            end_year=end_year,
+        )
+
+    rest_joined = " ".join(part.strip() for part in rest_lines if part.strip()).strip()
+    if degree and not institution_from_header:
+        words = degree.split()
+        if words and _looks_like_institution(words[-1]):
+            institution_from_header = words[-1]
+            degree = " ".join(words[:-1]).strip() or None
+
+    institution = rest_joined or None
+    if institution_from_header:
+        institution = f"{institution_from_header} {rest_joined}".strip() or None
 
     return EducationEntry(
         institution=institution,
