@@ -6,7 +6,7 @@ YELLOW=\033[0;33m
 CYAN=\033[0;36m
 RED=\033[0;31m
 
-.PHONY: install up down recreate logs run test test-unit test-api test-integration lint deactivate clear-branches
+.PHONY: install up down recreate logs run test test-unit test-api test-integration lint lint-fix deactivate clear-branches
 
 install:
 	uv sync
@@ -39,7 +39,10 @@ test-integration:
 	uv run pytest tests/infra/
 
 lint:
-	uv run ruff check .
+	docker compose exec api uv run ruff check .
+
+lint-fix:
+	docker compose exec api uv run ruff check . --fix
 
 # Exit the virtual environment (run 'deactivate' in your shell for the current session)
 deactivate:

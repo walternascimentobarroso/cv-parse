@@ -1,7 +1,7 @@
 import json
 from functools import lru_cache
 
-from pydantic import computed_field, Field
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEFAULT_ALLOWED_CONTENT_TYPES = "application/pdf,text/plain"

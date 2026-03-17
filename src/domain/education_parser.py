@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from typing import Iterable
 
-
 _YEAR_RANGE_PATTERN = re.compile(r"\b(?P<start>\d{4})\s*[-–]\s*(?P<end>\d{4})\b")
 _MONTH_YEAR_RANGE_PATTERN = re.compile(
     r"\b(?P<start_mon>\w{3})\s+(?P<start>\d{4})\s*[-–]\s*(?P<end_mon>\w{3})\s+(?P<end>\d{4})\b"
@@ -48,7 +47,7 @@ class EducationEntry:
 
 
 def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:
-    """Split into blocks by blank lines or by lines that look like education headers (degree + date)."""
+    """Split into blocks by blank lines or education-like headers (degree + date)."""
     block: list[str] = []
     for line in lines:
         stripped = line.strip()

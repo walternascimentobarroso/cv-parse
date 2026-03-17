@@ -93,14 +93,20 @@ def test_soft_delete_returns_false_for_invalid_id(repo: ExtractionRepository) ->
         raise AssertionError(f"Expected False for invalid id, got {result!r}")
 
 
-def test_update_returns_none_when_document_not_found(repo: ExtractionRepository, mock_collection) -> None:
+def test_update_returns_none_when_document_not_found(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
     mock_collection.find_one_and_update.return_value = None
     result = _run(repo.update("507f1f77bcf86cd799439011", {"extracted_text": "x"}))
     if result is not None:
         raise AssertionError(f"Expected None when find_one_and_update returns None, got {result!r}")
 
 
-def test_find_by_id_returns_document_when_found(repo: ExtractionRepository, mock_collection) -> None:
+def test_find_by_id_returns_document_when_found(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
     mock_collection.find_one.return_value = {
         "_id": "507f1f77bcf86cd799439011",
         "filename": "test.pdf",
@@ -138,7 +144,10 @@ def test_update_returns_document_when_found(repo: ExtractionRepository, mock_col
         raise AssertionError(f"Expected updated text, got {result.get('extracted_text')!r}")
 
 
-def test_soft_delete_returns_true_when_document_updated(repo: ExtractionRepository, mock_collection) -> None:
+def test_soft_delete_returns_true_when_document_updated(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
     mock_collection.update_one.return_value = MagicMock(modified_count=1)
     result = _run(repo.soft_delete("507f1f77bcf86cd799439011"))
     if result is not True:
@@ -151,17 +160,26 @@ def test_restore_returns_false_for_invalid_id(repo: ExtractionRepository) -> Non
         raise AssertionError(f"Expected 'not_found' for invalid id, got {result!r}")
 
 
-def test_restore_returns_not_deleted_when_active(repo: ExtractionRepository, mock_collection) -> None:
+def test_restore_returns_not_deleted_when_active(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
     mock_collection.find_one.return_value = {
         "_id": "507f1f77bcf86cd799439011",
         "deleted_at": None,
     }
     result = _run(repo.restore("507f1f77bcf86cd799439011"))
     if result != "not_deleted":
-        raise AssertionError(f"Expected 'not_deleted' when record is not soft deleted, got {result!r}")
+        raise AssertionError(
+            "Expected 'not_deleted' when record is not soft deleted, "
+            f"got {result!r}",
+        )
 
 
-def test_restore_returns_restored_when_document_updated(repo: ExtractionRepository, mock_collection) -> None:
+def test_restore_returns_restored_when_document_updated(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
     mock_collection.find_one.return_value = {
         "_id": "507f1f77bcf86cd799439011",
         "deleted_at": "some-timestamp",
@@ -206,7 +224,10 @@ def test_force_delete_returns_false_for_invalid_id(repo: ExtractionRepository) -
         raise AssertionError(f"Expected False for invalid id, got {result!r}")
 
 
-def test_force_delete_returns_true_when_document_deleted(repo: ExtractionRepository, mock_collection) -> None:
+def test_force_delete_returns_true_when_document_deleted(
+    repo: ExtractionRepository,
+    mock_collection,
+) -> None:
     mock_collection.delete_one.return_value = MagicMock(deleted_count=1)
     result = _run(repo.force_delete("507f1f77bcf86cd799439011"))
     if result is not True:

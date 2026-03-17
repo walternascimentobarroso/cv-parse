@@ -13,7 +13,7 @@ from src.services.upload_validator import ValidationError, ValidationOk, validat
 
 @pytest.fixture
 def settings() -> SimpleNamespace:
-    """Minimal settings-like object for validator (allowed_content_types, max_document_size_bytes)."""
+    """Minimal settings object for validator (allowed_content_types, max_document_size_bytes)."""
     return SimpleNamespace(
         allowed_content_types=["application/pdf", "text/plain"],
         max_document_size_bytes=100,

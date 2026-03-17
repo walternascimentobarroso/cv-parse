@@ -57,10 +57,13 @@ async def validate_upload(
 ) -> ValidationResult:
     """
     Validate upload: presence, content type, size (via chunked read).
-    Returns ValidationOk with content and metadata, or ValidationError.
+    Returns ValidationOk with content/metadata, or ValidationError.
     """
     if file is None:
-        logger.info("upload_validation", extra={"event": "validation_error", "reason": "missing_file"})
+        logger.info(
+            "upload_validation",
+            extra={"event": "validation_error", "reason": "missing_file"},
+        )
         return ValidationError(
             status_code=400,
             detail="Document file is required.",
@@ -71,7 +74,11 @@ async def validate_upload(
     if content_type not in allowed:
         logger.info(
             "upload_validation",
-            extra={"event": "validation_error", "reason": "unsupported_type", "content_type": content_type},
+            extra={
+                "event": "validation_error",
+                "reason": "unsupported_type",
+                "content_type": content_type,
+            },
         )
         return ValidationError(
             status_code=400,

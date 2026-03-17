@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 
-
 SectionMap = dict[str, str]
 
 

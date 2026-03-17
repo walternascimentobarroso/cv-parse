@@ -108,7 +108,7 @@ def test_education_entry_dataclass_defaults() -> None:
 
 
 def test_parse_education_two_blocks_separated_by_header_line() -> None:
-    """Two blocks separated by a line that looks like education header (no blank line) trigger block yield."""
+    """Two blocks separated by header-like line (no blank line) trigger block yield."""
     text = "University A, BSc 2015-2019\nCollege B, MSc 2019-2021"
     result = parse_education_section(text)
     if len(result) != 2:
@@ -128,7 +128,7 @@ def test_parse_education_month_year_range() -> None:
 
 
 def test_parse_education_header_only_years_no_text() -> None:
-    """Line with only year range (no degree/institution text) produces one entry with empty institution/degree."""
+    """Only year range (no degree/institution) → entry with empty fields."""
     text = "2018 - 2022"
     result = parse_education_section(text)
     if len(result) != 1:
@@ -138,7 +138,7 @@ def test_parse_education_header_only_years_no_text() -> None:
 
 
 def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
-    """When degree token ends with institution keyword and there are rest_lines, split degree and set institution from last word."""
+    """Degree ending with institution word + rest_lines splits degree and institution."""
     text = "Master University 2018 - 2022\nFaculty of Engineering"
     result = parse_education_section(text)
     if len(result) != 1:
@@ -147,4 +147,8 @@ def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
     if entry.get("degree") != "Master":
         raise AssertionError(f"Expected degree 'Master', got {entry.get('degree')!r}")
     if "University" not in (entry.get("institution") or ""):
-        raise AssertionError(f"Expected institution to contain University and rest, got {entry.get('institution')!r}")
+        inst = entry.get("institution")
+        raise AssertionError(
+            "Expected institution to contain University and rest, "
+            f"got {inst!r}",
+        )

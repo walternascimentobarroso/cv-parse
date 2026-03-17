@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import OrderedDict
 
-
 DEFAULT_SKILLS: list[str] = [
     "python",
     "php",

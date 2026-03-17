@@ -4,8 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-
-# Shape of parsed_data stored and returned by the API (experience, education, skills, certifications).
+# Shape of parsed_data stored/returned by the API
+# (experience, education, skills, certifications).
 ParsedDataDict = dict[str, object]
 
 

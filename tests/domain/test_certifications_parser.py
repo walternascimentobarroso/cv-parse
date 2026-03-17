@@ -70,7 +70,10 @@ def test_parse_continuation_line_merged_into_previous() -> None:
     text = "● PCAP – Certified Python Programmer 2024 Python\nInstitute"
     result = parse_certifications_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 item (continuation merged), got {len(result)}: {result!r}")
+        raise AssertionError(
+            "Expected 1 item (continuation merged), "
+            f"got {len(result)}: {result!r}",
+        )
     if "Institute" not in result[0]:
         raise AssertionError(f"Expected 'Institute' merged into cert, got {result[0]!r}")
 

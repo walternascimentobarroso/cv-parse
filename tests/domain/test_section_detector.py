@@ -23,35 +23,62 @@ def test_split_whitespace_only_returns_empty_sections() -> None:
 
 
 def test_split_experience_heading_variants() -> None:
-    for heading in ["Experience", "Work Experience", "Professional Experience", "Employment", "Career History"]:
+    headings = [
+        "Experience",
+        "Work Experience",
+        "Professional Experience",
+        "Employment",
+        "Career History",
+    ]
+    for heading in headings:
         text = f"{heading}:\nSoftware Engineer at Acme"
         result = split_into_sections(text)
         if "Software Engineer at Acme" not in result["experience"]:
-            raise AssertionError(f"For heading {heading!r}, expected content in experience, got {result!r}")
+            raise AssertionError(
+                f"For heading {heading!r}, expected content in experience, "
+                f"got {result!r}",
+            )
 
 
 def test_split_education_heading_variants() -> None:
-    for heading in ["Education", "Academic Background", "Academic History"]:
+    headings = ["Education", "Academic Background", "Academic History"]
+    for heading in headings:
         text = f"{heading}\nMIT 2020"
         result = split_into_sections(text)
         if "MIT 2020" not in result["education"]:
-            raise AssertionError(f"For heading {heading!r}, expected content in education, got {result!r}")
+            raise AssertionError(
+                f"For heading {heading!r}, expected content in education, "
+                f"got {result!r}",
+            )
 
 
 def test_split_skills_heading_variants() -> None:
-    for heading in ["Skills", "Technical Skills", "Core Skills"]:
+    headings = ["Skills", "Technical Skills", "Core Skills"]
+    for heading in headings:
         text = f"{heading}\nPython, Java"
         result = split_into_sections(text)
         if "Python, Java" not in result["skills"]:
-            raise AssertionError(f"For heading {heading!r}, expected content in skills, got {result!r}")
+            raise AssertionError(
+                f"For heading {heading!r}, expected content in skills, "
+                f"got {result!r}",
+            )
 
 
 def test_split_certifications_heading_variants() -> None:
-    for heading in ["Certifications", "Licenses", "Certificates", "Licenses & Certifications"]:
+    headings = [
+        "Certifications",
+        "Licenses",
+        "Certificates",
+        "Licenses & Certifications",
+    ]
+    for heading in headings:
         text = f"{heading}\nAWS Certified"
         result = split_into_sections(text)
         if "AWS Certified" not in result["certifications"]:
-            raise AssertionError(f"For heading {heading!r}, expected content in certifications, got {result!r}")
+            raise AssertionError(
+                f"For heading {heading!r}, expected content in certifications, "
+                f"got {result!r}",
+            )
 
 
 def test_split_normalises_heading_strip_and_colon() -> None:

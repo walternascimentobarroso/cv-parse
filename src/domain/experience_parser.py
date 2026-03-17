@@ -4,7 +4,6 @@ import re
 from dataclasses import dataclass
 from typing import Iterable
 
-
 _DATE_RANGE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(?P<start>\b\w{3}\s+\d{4})\s*[-–]\s*(?P<end>\b\w{3}\s+\d{4}|\b[Pp]resent\b)"),
     re.compile(r"(?P<start>\b\d{4})\s*[-–]\s*(?P<end>\b\d{4}|\b[Pp]resent\b)"),
@@ -53,7 +52,10 @@ def _has_company_hint(text: str) -> bool:
     return any(hint in text.lower() for hint in _COMPANY_HINTS)
 
 
-def _pick_company(role_candidate: str | None, company_candidate: str | None) -> tuple[str | None, str | None]:
+def _pick_company(
+    role_candidate: str | None,
+    company_candidate: str | None,
+) -> tuple[str | None, str | None]:
     left = role_candidate.strip() if role_candidate else ""
     right = company_candidate.strip() if company_candidate else ""
     if right and _has_company_hint(right):
@@ -89,7 +91,7 @@ def _line_looks_like_experience_header(line: str) -> bool:
 
 
 def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:
-    """Split into blocks by blank lines or by lines that look like experience headers (date range + role/company)."""
+    """Split blocks by blank lines or experience-like headers (date + role/company)."""
     block: list[str] = []
     for line in lines:
         stripped = line.strip()
