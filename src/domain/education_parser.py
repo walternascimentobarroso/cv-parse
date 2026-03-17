@@ -113,15 +113,10 @@ def _looks_like_degree(text: str) -> bool:
     return any(keyword in lowered for keyword in _DEGREE_KEYWORDS)
 
 
-def _build_education_entry(header_line: str, rest_lines: list[str]) -> EducationEntry:
-    start_year, end_year = _extract_years(header_line)
-    header_without_dates = _strip_year_segment(header_line)
-
-    institution: str | None = None
+def _parse_header_tokens(tokens: list[str]) -> tuple[str | None, str | None]:
     degree: str | None = None
-
-    tokens = [t.strip() for t in re.split(r"[,-]", header_without_dates) if t.strip()]
     institution_from_header: str | None = None
+
     for token in tokens:
         if degree is None and _looks_like_degree(token):
             degree = token
@@ -129,27 +124,76 @@ def _build_education_entry(header_line: str, rest_lines: list[str]) -> Education
         if institution_from_header is None and _looks_like_institution(token):
             institution_from_header = token
 
+    return degree, institution_from_header
+
+
+def _entry_without_rest_lines(
+    tokens: list[str],
+    degree: str | None,
+    institution_from_header: str | None,
+    start_year: int | None,
+    end_year: int | None,
+) -> EducationEntry:
+    institution: str | None = institution_from_header
+    if institution is None and tokens:
+        institution = tokens[0]
+
+    return EducationEntry(
+        institution=institution,
+        degree=degree,
+        start_year=start_year,
+        end_year=end_year,
+    )
+
+
+def _maybe_split_degree_institution(
+    degree: str | None,
+    institution_from_header: str | None,
+) -> tuple[str | None, str | None]:
+    if not degree or institution_from_header:
+        return degree, institution_from_header
+
+    words = degree.split()
+    if not words or not _looks_like_institution(words[-1]):
+        return degree, institution_from_header
+
+    institution_from_header = words[-1]
+    degree_without_last = " ".join(words[:-1]).strip() or None
+    return degree_without_last, institution_from_header
+
+
+def _build_institution(
+    rest_joined: str,
+    institution_from_header: str | None,
+) -> str | None:
+    institution: str | None = rest_joined or None
+    if institution_from_header:
+        institution = f"{institution_from_header} {rest_joined}".strip() or None
+    return institution
+
+
+def _build_education_entry(header_line: str, rest_lines: list[str]) -> EducationEntry:
+    start_year, end_year = _extract_years(header_line)
+    header_without_dates = _strip_year_segment(header_line)
+
+    tokens = [t.strip() for t in re.split(r"[,-]", header_without_dates) if t.strip()]
+    degree, institution_from_header = _parse_header_tokens(tokens)
+
     if not rest_lines:
-        institution = institution_from_header
-        if institution is None and tokens:
-            institution = tokens[0]
-        return EducationEntry(
-            institution=institution,
+        return _entry_without_rest_lines(
+            tokens=tokens,
             degree=degree,
+            institution_from_header=institution_from_header,
             start_year=start_year,
             end_year=end_year,
         )
 
     rest_joined = " ".join(part.strip() for part in rest_lines if part.strip()).strip()
-    if degree and not institution_from_header:
-        words = degree.split()
-        if words and _looks_like_institution(words[-1]):
-            institution_from_header = words[-1]
-            degree = " ".join(words[:-1]).strip() or None
-
-    institution = rest_joined or None
-    if institution_from_header:
-        institution = f"{institution_from_header} {rest_joined}".strip() or None
+    degree, institution_from_header = _maybe_split_degree_institution(
+        degree,
+        institution_from_header,
+    )
+    institution = _build_institution(rest_joined, institution_from_header)
 
     return EducationEntry(
         institution=institution,

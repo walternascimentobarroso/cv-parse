@@ -152,3 +152,31 @@ def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
             "Expected institution to contain University and rest, "
             f"got {inst!r}",
         )
+
+
+def test_parse_education_no_degree_or_institution_in_header_uses_first_token() -> None:
+    """Header without degree keyword keeps tokens and does not split degree/institution."""
+    text = "Institute of Tech 2018 - 2022\nSome Faculty"
+    result = parse_education_section(text)
+    if len(result) != 1:
+        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+    entry = result[0]
+    if entry.get("degree") not in (None, ""):
+        raise AssertionError(f"Expected empty degree, got {entry.get('degree')!r}")
+    if "Some Faculty" not in (entry.get("institution") or ""):
+        inst = entry.get("institution")
+        raise AssertionError(
+            "Expected rest lines in institution, "
+            f"got {inst!r}",
+        )
+
+
+def test_parse_education_degree_without_institution_word_not_split() -> None:
+    """Degree without trailing institution word should not be split."""
+    text = "BSc Computer Science 2018-2022\nSome University"
+    result = parse_education_section(text)
+    if len(result) != 1:
+        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+    entry = result[0]
+    if "BSc" not in (entry.get("degree") or ""):
+        raise AssertionError(f"Expected degree to contain 'BSc', got {entry.get('degree')!r}")

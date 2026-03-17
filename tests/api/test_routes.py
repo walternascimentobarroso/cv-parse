@@ -145,31 +145,33 @@ def test_get_extraction_not_found_valid_id(client: TestClient) -> None:
         raise AssertionError(f"Expected status 404, got {response.status_code}")
 
 
-def test_crud_extraction_flow(client: TestClient) -> None:
-    """Create via POST /extract, then GET by id, list, PATCH, DELETE; soft-deleted not in list."""
-    files = {"file": ("test.txt", b"crud test", "text/plain")}
-    create_resp = client.post("/extract", files=files)
-    if create_resp.status_code != 200:
-        raise AssertionError(f"Expected 200 on create, got {create_resp.status_code}")
-    body = create_resp.json()
+def _create_extraction(client: TestClient, content: bytes) -> str:
+    files = {"file": ("test.txt", content, "text/plain")}
+    response = client.post("/extract", files=files)
+    if response.status_code != 200:
+        raise AssertionError(f"Expected 200 on create, got {response.status_code}")
+    body = response.json()
     extraction_id = body["id"]
     if len(extraction_id) != 24:
         raise AssertionError(f"Expected 24-char id, got {extraction_id!r}")
+    return extraction_id
 
-    get_resp = client.get(f"/extractions/{extraction_id}")
-    if get_resp.status_code != 200:
-        raise AssertionError(f"Expected 200 on GET, got {get_resp.status_code}")
-    get_data = get_resp.json()
-    if get_data["id"] != extraction_id:
-        raise AssertionError(f"Expected id {extraction_id}, got {get_data['id']}")
-    if get_data["extracted_text"] != "crud test":
-        extracted = get_data["extracted_text"]
-        raise AssertionError(
-            f"Expected extracted_text 'crud test', got {extracted}",
-        )
-    if "created_at" not in get_data:
+
+def _assert_get_matches(client: TestClient, extraction_id: str, expected_text: str) -> None:
+    response = client.get(f"/extractions/{extraction_id}")
+    if response.status_code != 200:
+        raise AssertionError(f"Expected 200 on GET, got {response.status_code}")
+    data = response.json()
+    if data["id"] != extraction_id:
+        raise AssertionError(f"Expected id {extraction_id}, got {data['id']}")
+    if data["extracted_text"] != expected_text:
+        text = data["extracted_text"]
+        raise AssertionError(f"Expected extracted_text {expected_text!r}, got {text!r}")
+    if "created_at" not in data:
         raise AssertionError("Expected created_at in response")
 
+
+def _assert_list_contains_id(client: TestClient, extraction_id: str) -> None:
     list_resp = client.get("/extractions")
     if list_resp.status_code != 200:
         raise AssertionError(f"Expected 200 on list, got {list_resp.status_code}")
@@ -178,35 +180,55 @@ def test_crud_extraction_flow(client: TestClient) -> None:
     if extraction_id not in ids:
         raise AssertionError(f"Expected id {extraction_id} in list: {ids}")
 
+
+def _assert_patch_updates_text(client: TestClient, extraction_id: str, new_text: str) -> None:
     patch_resp = client.patch(
         f"/extractions/{extraction_id}",
-        json={"extracted_text": "updated text"},
+        json={"extracted_text": new_text},
     )
     if patch_resp.status_code != 200:
         raise AssertionError(f"Expected 200 on PATCH, got {patch_resp.status_code}")
     patch_data = patch_resp.json()
-    if patch_data["extracted_text"] != "updated text":
+    if patch_data["extracted_text"] != new_text:
         raise AssertionError(f"Expected updated text, got {patch_data['extracted_text']}")
     if patch_data.get("updated_at") is None:
         raise AssertionError("Expected updated_at after PATCH")
 
+
+def _assert_delete_and_not_found(client: TestClient, extraction_id: str) -> None:
     delete_resp = client.delete(f"/extractions/{extraction_id}")
     if delete_resp.status_code != 204:
         raise AssertionError(f"Expected 204 on DELETE, got {delete_resp.status_code}")
-
     get_after_resp = client.get(f"/extractions/{extraction_id}")
     if get_after_resp.status_code != 404:
         raise AssertionError(f"Expected 404 after delete, got {get_after_resp.status_code}")
 
+
+def _assert_not_in_list(client: TestClient, extraction_id: str) -> None:
     list_after_resp = client.get("/extractions")
     list_after = list_after_resp.json()["items"]
     ids_after = [x["id"] for x in list_after]
     if extraction_id in ids_after:
         raise AssertionError(f"Soft-deleted id should not be in list: {ids_after}")
 
+
+def _assert_second_delete_404(client: TestClient, extraction_id: str) -> None:
     delete_again_resp = client.delete(f"/extractions/{extraction_id}")
     if delete_again_resp.status_code != 404:
-        raise AssertionError(f"Expected 404 on second DELETE, got {delete_again_resp.status_code}")
+        raise AssertionError(
+            f"Expected 404 on second DELETE, got {delete_again_resp.status_code}",
+        )
+
+
+def test_crud_extraction_flow(client: TestClient) -> None:
+    """Create via POST /extract, then GET by id, list, PATCH, DELETE; soft-deleted not in list."""
+    extraction_id = _create_extraction(client, b"crud test")
+    _assert_get_matches(client, extraction_id, "crud test")
+    _assert_list_contains_id(client, extraction_id)
+    _assert_patch_updates_text(client, extraction_id, "updated text")
+    _assert_delete_and_not_found(client, extraction_id)
+    _assert_not_in_list(client, extraction_id)
+    _assert_second_delete_404(client, extraction_id)
 
 
 def test_restore_soft_deleted_extraction(client: TestClient) -> None:
