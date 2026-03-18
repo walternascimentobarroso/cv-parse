@@ -35,8 +35,7 @@ def test_split_experience_heading_variants() -> None:
         result = split_into_sections(text)
         if "Software Engineer at Acme" not in result["experience"]:
             raise AssertionError(
-                f"For heading {heading!r}, expected content in experience, "
-                f"got {result!r}",
+                f"For heading {heading!r}, expected content in experience, got {result!r}",
             )
 
 
@@ -47,8 +46,7 @@ def test_split_education_heading_variants() -> None:
         result = split_into_sections(text)
         if "MIT 2020" not in result["education"]:
             raise AssertionError(
-                f"For heading {heading!r}, expected content in education, "
-                f"got {result!r}",
+                f"For heading {heading!r}, expected content in education, got {result!r}",
             )
 
 
@@ -59,8 +57,7 @@ def test_split_skills_heading_variants() -> None:
         result = split_into_sections(text)
         if "Python, Java" not in result["skills"]:
             raise AssertionError(
-                f"For heading {heading!r}, expected content in skills, "
-                f"got {result!r}",
+                f"For heading {heading!r}, expected content in skills, got {result!r}",
             )
 
 
@@ -76,8 +73,7 @@ def test_split_certifications_heading_variants() -> None:
         result = split_into_sections(text)
         if "AWS Certified" not in result["certifications"]:
             raise AssertionError(
-                f"For heading {heading!r}, expected content in certifications, "
-                f"got {result!r}",
+                f"For heading {heading!r}, expected content in certifications, got {result!r}",
             )
 
 

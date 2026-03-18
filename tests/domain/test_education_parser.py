@@ -149,8 +149,7 @@ def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
     if "University" not in (entry.get("institution") or ""):
         inst = entry.get("institution")
         raise AssertionError(
-            "Expected institution to contain University and rest, "
-            f"got {inst!r}",
+            f"Expected institution to contain University and rest, got {inst!r}",
         )
 
 
@@ -166,8 +165,7 @@ def test_parse_education_no_degree_or_institution_in_header_uses_first_token() -
     if "Some Faculty" not in (entry.get("institution") or ""):
         inst = entry.get("institution")
         raise AssertionError(
-            "Expected rest lines in institution, "
-            f"got {inst!r}",
+            f"Expected rest lines in institution, got {inst!r}",
         )
 
 

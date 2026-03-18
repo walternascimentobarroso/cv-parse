@@ -39,4 +39,3 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Doc-to-Text API", lifespan=lifespan)
 
 app.include_router(api_router)
-

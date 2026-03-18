@@ -34,13 +34,15 @@ def repo(mock_collection):
 
 def test_save_extraction_sets_audit_fields(repo: ExtractionRepository, mock_collection) -> None:
     mock_collection.insert_one.return_value = MagicMock(inserted_id="507f1f77bcf86cd799439011")
-    result = _run(repo.save_extraction(
-        filename="test.pdf",
-        content_type="application/pdf",
-        size_bytes=100,
-        extracted_text="text",
-        status="success",
-    ))
+    result = _run(
+        repo.save_extraction(
+            filename="test.pdf",
+            content_type="application/pdf",
+            size_bytes=100,
+            extracted_text="text",
+            status="success",
+        )
+    )
     if result != "507f1f77bcf86cd799439011":
         raise AssertionError(f"Expected inserted id, got {result!r}")
     call_args = mock_collection.insert_one.call_args[0][0]
@@ -171,8 +173,7 @@ def test_restore_returns_not_deleted_when_active(
     result = _run(repo.restore("507f1f77bcf86cd799439011"))
     if result != "not_deleted":
         raise AssertionError(
-            "Expected 'not_deleted' when record is not soft deleted, "
-            f"got {result!r}",
+            f"Expected 'not_deleted' when record is not soft deleted, got {result!r}",
         )
 
 

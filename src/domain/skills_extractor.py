@@ -34,4 +34,3 @@ def extract_skills(text: str, *, skills_catalog: list[str] | None = None) -> lis
             found[token] = None
 
     return list(found.keys())
-

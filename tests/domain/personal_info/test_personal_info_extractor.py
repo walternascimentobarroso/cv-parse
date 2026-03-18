@@ -1,3 +1,6 @@
+from unittest.mock import MagicMock, patch
+
+from src.domain.personal_info.services import personal_info_extractor as pie
 from src.domain.personal_info.services.personal_info_extractor import (
     extract_email,
     extract_links,
@@ -20,6 +23,11 @@ def test_extract_email_invalid_returns_none() -> None:
     result = extract_email(text)
     if result is not None:
         raise AssertionError(f"Expected None for invalid email, got {result!r}")
+
+
+def test_extract_email_empty_text_returns_none() -> None:
+    if extract_email("") is not None:
+        raise AssertionError("Expected None for empty text")
 
 
 def test_extract_links_linkedin_and_github() -> None:
@@ -89,6 +97,128 @@ def test_extract_phone_too_short_returns_none() -> None:
         raise AssertionError(f"Expected None for too-short phone, got {result!r}")
 
 
+def test_extract_phone_empty_text_returns_none() -> None:
+    if extract_phone("") is not None:
+        raise AssertionError("Expected None for empty text")
+
+
+def test_extract_phone_match_but_fewer_than_seven_digits_returns_none() -> None:
+    # Matches PHONE_REGEX but digit count (excluding +) is 6.
+    text = "Call +1 234 56"
+    result = extract_phone(text)
+    if result is not None:
+        raise AssertionError(f"Expected None when <7 digits, got {result!r}")
+
+
+def test_iter_urls_empty_text_returns_nothing() -> None:
+    if list(pie._iter_urls("")) != []:
+        raise AssertionError("Expected empty iterator for empty text")
+
+
+def test_iter_urls_skips_whitespace_only_match() -> None:
+    mock_match = MagicMock()
+    mock_match.group.return_value = "   "
+
+    def _fake_finditer(_t: str):
+        return iter([mock_match])
+
+    with patch.object(pie, "_url_regex_finditer", side_effect=_fake_finditer):
+        if list(pie._iter_urls("x")) != []:
+            raise AssertionError("Expected no URLs when group strips to empty")
+
+
+def test_normalize_url_empty_netloc_returns_none() -> None:
+    if pie._normalize_url("https://") is not None:
+        raise AssertionError("Expected None for URL with empty netloc")
+
+
+def test_classify_url_linkedin_github_and_other() -> None:
+    li, gh = pie._classify_url("https://www.linkedin.com/in/x")
+    if li is None or "linkedin" not in li:
+        raise AssertionError(f"Expected linkedin URL, got {li!r}")
+    if gh is not None:
+        raise AssertionError(f"Expected github None, got {gh!r}")
+
+    li2, gh2 = pie._classify_url("https://github.com/u")
+    if li2 is not None or gh2 is None or "github.com" not in gh2:
+        raise AssertionError(f"Expected github only, got {li2!r} {gh2!r}")
+
+    li3, gh3 = pie._classify_url("https://example.com/path")
+    if li3 is not None or gh3 is not None:
+        raise AssertionError(f"Expected both None, got {li3!r} {gh3!r}")
+
+
+def test_choose_linkedin_skips_unnormalizable_then_picks() -> None:
+    out = pie._choose_linkedin(["https://", "https://www.linkedin.com/in/ada"])
+    if out is None or "linkedin.com" not in out:
+        raise AssertionError(f"Expected linkedin after skip, got {out!r}")
+
+
+def test_choose_github_skips_unnormalizable_then_picks() -> None:
+    out = pie._choose_github(["https://", "github.com/ada"])
+    if out is None or "github.com" not in out:
+        raise AssertionError(f"Expected github after skip, got {out!r}")
+
+
+def test_choose_github_no_github_url_returns_none() -> None:
+    if pie._choose_github(["https://example.com"]) is not None:
+        raise AssertionError("Expected None when no github URL")
+
+
+def test_extract_links_only_linkedin_github_none() -> None:
+    result = extract_links("See https://www.linkedin.com/in/ada")
+    if result["github"] is not None:
+        raise AssertionError(f"Expected github None, got {result['github']!r}")
+
+
+def test_extract_name_skips_email_http_https_lines() -> None:
+    lines = ["x@y.com", "http://a.com", "https://b.com", "Real Name"]
+    if extract_name(lines) != "Real Name":
+        raise AssertionError("Expected name after skipping email/URLs")
+
+
+def test_extract_name_skips_experience_education_skills_heading_lines() -> None:
+    if extract_name(["Experience at Acme", "Jane Doe"]) != "Jane Doe":
+        raise AssertionError("Expected skip experience-like line")
+    if extract_name(["Education background", "Bob"]) != "Bob":
+        raise AssertionError("Expected skip education-like line")
+    if extract_name(["Skills include Python", "Ann"]) != "Ann":
+        raise AssertionError("Expected skip skills-like line")
+
+
+def test_extract_name_all_lines_skipped_returns_none() -> None:
+    lines = ["", "a@b.c", "https://x.com", "Experience", "Education"]
+    if extract_name(lines) is not None:
+        raise AssertionError("Expected None when no usable name line")
+
+
+def test_extract_summary_empty_returns_none() -> None:
+    if extract_summary("") is not None:
+        raise AssertionError("Expected None for empty summary input")
+
+
+def test_extract_summary_single_paragraph_returns_none() -> None:
+    if extract_summary("Only one block\nsecond line same paragraph") is not None:
+        raise AssertionError("Expected None when fewer than two paragraphs")
+
+
+def test_extract_summary_second_paragraph_is_section_heading_returns_none() -> None:
+    text = "Header line\n\nExperience\nEngineer at X"
+    if extract_summary(text) is not None:
+        raise AssertionError("Expected None when second paragraph starts as section heading")
+
+
+def test_extract_summary_second_paragraph_starts_education_skills_certifications() -> None:
+    for heading, body in (
+        ("Education", "MIT 2020"),
+        ("Skills", "Python"),
+        ("Certifications", "AWS"),
+    ):
+        text = f"Name\n\n{heading}\n{body}"
+        if extract_summary(text) is not None:
+            raise AssertionError(f"Expected None for heading {heading!r}")
+
+
 def test_extract_personal_info_missing_email_and_summary() -> None:
     text = """Ada Lovelace
 github.com/adalovelace
@@ -117,4 +247,3 @@ def test_extract_personal_info_empty_text_returns_all_keys() -> None:
         raise AssertionError(f"Expected keys {expected_keys}, got {set(result.keys())}")
     if any(value is not None for value in result.values()):
         raise AssertionError(f"Expected all None values, got {result!r}")
-

@@ -16,4 +16,3 @@ def test_main_app_health_endpoint() -> None:
         body = response.json()
         if body.get("status") != "ok":
             raise AssertionError(f"Expected status 'ok', got {body.get('status')!r}")
-

@@ -224,5 +224,3 @@ def parse_education_section(text: str) -> list[dict]:
         }
         for e in entries
     ]
-
-

@@ -274,8 +274,7 @@ def test_restore_non_deleted_extraction_returns_400(client: TestClient) -> None:
     if restore_resp.status_code != 400:
         status = restore_resp.status_code
         raise AssertionError(
-            "Expected 400 when restoring non-deleted record, "
-            f"got {status}",
+            f"Expected 400 when restoring non-deleted record, got {status}",
         )
 
 
@@ -298,8 +297,7 @@ def test_force_delete_extraction(client: TestClient) -> None:
     if restore_after_resp.status_code != 404:
         status = restore_after_resp.status_code
         raise AssertionError(
-            "Expected 404 when restoring force-deleted record, "
-            f"got {status}",
+            f"Expected 404 when restoring force-deleted record, got {status}",
         )
 
 
@@ -345,8 +343,7 @@ def test_update_extraction_not_found_after_valid_id(
         if response.status_code != 404:
             status = response.status_code
             raise AssertionError(
-                "Expected 404 when repo.update returns None, "
-                f"got {status}",
+                f"Expected 404 when repo.update returns None, got {status}",
             )
     finally:
         repo.update = original_update  # type: ignore[assignment]
@@ -364,8 +361,7 @@ def test_update_extraction_empty_body_not_found_returns_404(client: TestClient) 
     if response.status_code != 404:
         status = response.status_code
         raise AssertionError(
-            "Expected 404 when empty body and document not found, "
-            f"got {status}",
+            f"Expected 404 when empty body and document not found, got {status}",
         )
 
 
@@ -380,8 +376,7 @@ def test_restore_not_found_returns_404(client: TestClient) -> None:
     if response.status_code != 404:
         status = response.status_code
         raise AssertionError(
-            "Expected 404 when restoring non-existent id, "
-            f"got {status}",
+            f"Expected 404 when restoring non-existent id, got {status}",
         )
 
 
@@ -408,8 +403,7 @@ def test_restore_404_when_document_missing_after_restore(
         if response.status_code != 404:
             status = response.status_code
             raise AssertionError(
-                "Expected 404 when repo.find_by_id returns None after restore, "
-                f"got {status}",
+                f"Expected 404 when repo.find_by_id returns None after restore, got {status}",
             )
     finally:
         repo.restore = original_restore  # type: ignore[assignment]
@@ -421,8 +415,7 @@ def test_force_delete_invalid_id_returns_404(client: TestClient) -> None:
     if response.status_code != 404:
         status = response.status_code
         raise AssertionError(
-            "Expected 404 for invalid id on force delete, "
-            f"got {status}",
+            f"Expected 404 for invalid id on force delete, got {status}",
         )
 
 
@@ -431,6 +424,5 @@ def test_force_delete_not_found_returns_404(client: TestClient) -> None:
     if response.status_code != 404:
         status = response.status_code
         raise AssertionError(
-            "Expected 404 for non-existent id on force delete, "
-            f"got {status}",
+            f"Expected 404 for non-existent id on force delete, got {status}",
         )

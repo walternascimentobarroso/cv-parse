@@ -47,17 +47,11 @@ class UploadValidationSettings(Protocol):
 
 
 def _detail_unsupported(supported: list[str]) -> str:
-    return (
-        "Unsupported document format. "
-        f"Supported formats: {', '.join(supported)}."
-    )
+    return f"Unsupported document format. Supported formats: {', '.join(supported)}."
 
 
 def _detail_size_exceeded(max_bytes: int) -> str:
-    return (
-        "Document exceeds maximum allowed size "
-        f"({max_bytes} bytes)."
-    )
+    return f"Document exceeds maximum allowed size ({max_bytes} bytes)."
 
 
 async def validate_upload(

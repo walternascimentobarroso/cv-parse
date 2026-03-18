@@ -142,5 +142,3 @@ def parse_experience_section(text: str) -> list[dict]:
         }
         for e in entries
     ]
-
-

@@ -85,4 +85,3 @@ class ErrorDetail(BaseModel):
     """Standard error body (e.g. 400, 413, 500)."""
 
     detail: str
-

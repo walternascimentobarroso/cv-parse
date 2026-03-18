@@ -55,4 +55,3 @@ def test_settings_mongodb_validator_rejects_blank() -> None:
         Settings._require_non_empty("")
     with pytest.raises(ValueError, match="MongoDB settings must be provided"):
         Settings._require_non_empty("   ")
-

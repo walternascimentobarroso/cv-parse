@@ -97,4 +97,3 @@ def split_into_sections(raw_text: str) -> SectionMap:
         "certifications": "\n".join(buckets.get("certifications", [])).strip(),
         "languages": "\n".join(buckets.get("languages", [])).strip(),
     }
-

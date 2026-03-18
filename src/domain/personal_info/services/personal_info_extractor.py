@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 
 from src.domain.personal_info.entities.personal_info import PersonalInfo
 
-
 HEADER_MAX_LINES = 10
 
 EMAIL_REGEX = re.compile(
@@ -16,7 +15,9 @@ EMAIL_REGEX = re.compile(
 )
 
 URL_REGEX = re.compile(
-    r"(https?://[^\s]+)",
+    # Match both full URLs (with scheme) and bare domains/paths like "github.com/ada".
+    # We rely on `_normalize_url()` to prepend https:// when the scheme is missing.
+    r"((?:https?://)?[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:/[^\s]*)?)",
     flags=re.IGNORECASE,
 )
 
@@ -48,10 +49,15 @@ def extract_phone(text: str) -> str | None:
     return raw.strip()
 
 
+def _url_regex_finditer(text: str) -> Iterable[re.Match[str]]:
+    """Thin wrapper so tests can cover the empty-stripped match branch."""
+    return URL_REGEX.finditer(text)
+
+
 def _iter_urls(text: str) -> Iterable[str]:
     if not text:
         return []
-    for match in URL_REGEX.finditer(text):
+    for match in _url_regex_finditer(text):
         url = match.group(1).strip()
         if not url:
             continue
@@ -118,6 +124,20 @@ def _looks_like_heading(text: str) -> bool:
     return False
 
 
+def _starts_with_section_heading(text: str) -> bool:
+    """
+    Summary pode conter a palavra "experience" no meio da frase, então
+    detectamos headings apenas quando o texto começa com eles.
+    """
+    lowered = text.strip().lower()
+    return (
+        lowered.startswith("experience")
+        or lowered.startswith("education")
+        or lowered.startswith("skills")
+        or lowered.startswith("certifications")
+    )
+
+
 def extract_name(lines: list[str]) -> str | None:
     for raw in lines:
         candidate = raw.strip()
@@ -152,13 +172,16 @@ def extract_summary(text: str) -> str | None:
     if not text:
         return None
     lines = text.splitlines()
-    if len(lines) <= HEADER_MAX_LINES:
+    paragraphs = _paragraphs(lines)
+    if len(paragraphs) < 2:
         return None
-    body_lines = lines[HEADER_MAX_LINES:]
-    paragraphs = _paragraphs(body_lines)
-    if not paragraphs:
+
+    # O summary esperado é o parágrafo imediatamente após o bloco do "header"
+    # (nome/email/links), que normalmente fica separado por uma linha em branco.
+    candidate = paragraphs[1]
+    if _starts_with_section_heading(candidate):
         return None
-    return paragraphs[0]
+    return candidate
 
 
 def extract_personal_info(raw_text: str) -> dict[str, str | None]:
@@ -185,4 +208,3 @@ def extract_personal_info(raw_text: str) -> dict[str, str | None]:
         summary=summary,
     )
     return info.to_dict()
-

@@ -42,4 +42,3 @@ class SimpleDocumentExtractor:
                 page_text = page.extract_text() or ""
                 texts.append(page_text)
         return "\n".join(texts).strip()
-

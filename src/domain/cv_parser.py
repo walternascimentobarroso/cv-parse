@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from src.domain.certifications_parser import parse_certifications_section
 from src.domain.education_parser import parse_education_section
 from src.domain.experience_parser import parse_experience_section
+from src.domain.personal_info.entities.personal_info import PersonalInfo
 from src.domain.section_detector import split_into_sections
 from src.domain.skills_extractor import extract_skills
 
@@ -15,7 +16,7 @@ class CvParsedData:
     education: list[dict]
     skills: list[str]
     certifications: list[str]
-    personal_info: dict[str, str | None]
+    personal_info: dict[str, str | None] = field(default_factory=lambda: PersonalInfo().to_dict())
 
 
 def parse_cv(raw_text: str) -> CvParsedData:
@@ -58,4 +59,3 @@ def parse_cv(raw_text: str) -> CvParsedData:
         certifications=certifications,
         personal_info=personal_info,
     )
-

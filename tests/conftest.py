@@ -5,6 +5,7 @@ Shared test configuration and fixtures.
 - get_repo and get_extractor are satisfied via app.state set in test lifespan.
 - Use dependency_overrides to inject failing extractor for 500 tests.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -72,11 +73,7 @@ class InMemoryExtractionRepository:
         return self._to_response(doc)
 
     async def find_all(self) -> list[dict]:
-        return [
-            self._to_response(d)
-            for d in self._docs.values()
-            if d.get("deleted_at") is None
-        ]
+        return [self._to_response(d) for d in self._docs.values() if d.get("deleted_at") is None]
 
     async def update(self, extraction_id: str, payload: dict) -> dict | None:
         doc = self._docs.get(extraction_id)

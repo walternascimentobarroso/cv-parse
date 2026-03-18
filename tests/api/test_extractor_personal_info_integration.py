@@ -52,4 +52,3 @@ def test_existing_parsed_data_fields_preserved(client) -> None:  # type: ignore[
     for key in ("experience", "education", "skills", "certifications"):
         if key not in parsed:
             raise AssertionError(f"Expected {key} in parsed_data, got keys {list(parsed.keys())}")
-

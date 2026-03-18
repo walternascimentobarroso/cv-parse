@@ -49,4 +49,3 @@ def parse_certifications_section(text: str) -> list[str]:
         results.append(_normalize_certification(" ".join(current)))
 
     return results
-

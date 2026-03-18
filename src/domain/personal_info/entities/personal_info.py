@@ -14,4 +14,3 @@ class PersonalInfo:
 
     def to_dict(self) -> dict[str, str | None]:
         return asdict(self)
-
