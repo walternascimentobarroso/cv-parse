@@ -65,19 +65,19 @@ Do **not** use `assert` for enforcing interface constraints or critical checks. 
 
 Apply this in both production and test code (e.g. in `tests/`).
 
-## Controle de Fluxo (Early Return, sem `else`)
+## Control flow (early return, avoid `else`)
 
-- **Evitar `else` sempre que possível**:
-  - Prefira guard clauses (`if condicao: return ...`) em vez de `if ... else ...`.
-  - Use retornos antecipados para tratar erros, entradas inválidas ou casos triviais antes do caminho “feliz”.
-- **Use o poder das funções**:
-  - Extraia funções auxiliares para encapsular ramificações complexas em vez de aninhar condicionais.
-  - Mantenha cada função com um único nível de abstração e responsabilidade clara.
-- **Padrões recomendados**:
-  - `if not condicao_valida: return resposta_de_erro` seguido do fluxo principal sem `else`.
-  - `if caso_trivial: return valor_trivial` seguido do tratamento geral.
-- **Consequência prática**:
-  - Ao revisar ou escrever código novo, questione todo `else`; se ele puder ser reescrito com early return, faça a refatoração.
-  - Em rotas FastAPI, valide cedo e retorne erros rapidamente; deixe a lógica “feliz” livre de `else`.
+- **Avoid `else` when possible**:
+  - Prefer guard clauses (`if condition: return ...`) over `if ... else ...`.
+  - Return early for errors, invalid input, or trivial cases before the main happy path.
+- **Use small functions**:
+  - Extract helpers to encapsulate complex branching instead of nesting conditionals.
+  - Keep each function at a single level of abstraction with a clear responsibility.
+- **Recommended patterns**:
+  - `if not is_valid: return error_response` then continue the main flow without `else`.
+  - `if is_trivial: return trivial_value` then handle the general case.
+- **Practical takeaway**:
+  - When reviewing or writing code, question every `else`; refactor to early return where it helps.
+  - In FastAPI routes, validate early and return errors quickly; keep the happy path free of unnecessary `else`.
 
 <!-- MANUAL ADDITIONS END -->

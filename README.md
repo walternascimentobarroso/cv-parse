@@ -40,82 +40,82 @@ See `specs/002-dev-env-tooling/quickstart.md` and `specs/002-dev-env-tooling/con
 
 ## Debug (VS Code / Cursor)
 
-O projeto está configurado para debug da API FastAPI e dos testes com pytest. Use o passo a passo abaixo para ativar e usar o debug no futuro.
+The project is set up to debug the FastAPI app and pytest tests. Follow the steps below to enable debugging later.
 
-**Em qualquer modo de debug da API (local ou Docker), a API continua acessível em http://localhost:8000** — o debugpy usa só a porta 5678 para o IDE se conectar; o uvicorn segue na 8000.
+**In any API debug mode (local or Docker), the API stays at http://localhost:8000** — debugpy only uses port 5678 for the IDE; uvicorn keeps serving on 8000.
 
-### 1. Pré-requisitos
+### 1. Prerequisites
 
-- **Python**: extensão Python (ou Pylance) instalada no editor.
-- **Dependências**: ambiente criado com `make install` (ou `uv sync`).
-- **MongoDB** (só para debug da API): serviços em execução com `make up`, para a API conectar ao banco.
+- **Python**: Python extension (or Pylance) installed in the editor.
+- **Dependencies**: environment created with `make install` (or `uv sync`).
+- **MongoDB** (API debugging only): services running with `make up` so the API can reach the database.
 
-### 2. Interpretador Python
+### 2. Python interpreter
 
-O debugger usa o interpretador do ambiente virtual do projeto:
+The debugger uses the project virtual environment:
 
-1. Abra a paleta de comandos: `Cmd+Shift+P` (macOS) ou `Ctrl+Shift+P` (Windows/Linux).
-2. Procure por **Python: Select Interpreter**.
-3. Selecione o interpretador do `.venv` do projeto (ex.: `./.venv/bin/python` ou o que o uv tiver criado).
+1. Command palette: `Cmd+Shift+P` (macOS) or `Ctrl+Shift+P` (Windows/Linux).
+2. Run **Python: Select Interpreter**.
+3. Pick the project `.venv` interpreter (e.g. `./.venv/bin/python`).
 
-Se o `.venv` não aparecer, rode `make install` na raiz do repositório e tente de novo.
+If `.venv` is missing, run `make install` at the repo root and try again.
 
-### 3. Variáveis de ambiente para debug da API
+### 3. Environment variables for API debugging
 
-Quando você roda a **API no seu machine** (via debug), ela precisa falar com o MongoDB. Com `make up`, o MongoDB fica em Docker e fica acessível em `localhost:27017`.
+When you run the **API on your machine** (via debug), it must reach MongoDB. With `make up`, MongoDB runs in Docker at `localhost:27017`.
 
-No seu `.env`, use:
+In `.env`:
 
 ```bash
 MONGODB_URI=mongodb://localhost:27017
 ```
 
-Assim a API em debug na sua máquina consegue conectar ao MongoDB do Docker. (Quando a API roda dentro do Docker, o Compose usa `mongodb:27017`; para debug local, use `localhost:27017`.)
+That lets a locally debugged API talk to Docker MongoDB. (Inside Docker, Compose uses `mongodb:27017`; for local debug use `localhost:27017`.)
 
-### 4. Como iniciar o debug
+### 4. Starting a debug session
 
-1. Abra o painel **Run and Debug**: ícone de “play com inseto” na barra lateral ou `Cmd+Shift+D` / `Ctrl+Shift+D`.
-2. No dropdown no topo do painel, escolha uma das configurações:
-   - **FastAPI (debug)** – sobe a API com o debugger na sua máquina (recomendado para colocar breakpoints na API).
-   - **FastAPI (debug + reload)** – mesma coisa, com reload automático ao salvar (o reload pode desconectar o debugger por um instante).
-   - **FastAPI (attach to Docker)** – conecta o debugger à API rodando **dentro do Docker** (veja [Debug com a API no Docker](#6-debug-com-a-api-no-docker) abaixo).
-   - **Pytest: current file** – roda e debuga só o arquivo de teste aberto.
-   - **Pytest: all** – roda e debuga todos os testes em `tests/`.
-3. Pressione **F5** (ou o botão verde “Start Debugging”) para iniciar.
+1. Open **Run and Debug** (sidebar or `Cmd+Shift+D` / `Ctrl+Shift+D`).
+2. In the dropdown, pick:
+   - **FastAPI (debug)** – API with debugger on your machine (best for API breakpoints).
+   - **FastAPI (debug + reload)** – same, with reload on save (reload may briefly disconnect the debugger).
+   - **FastAPI (attach to Docker)** – attach to the API **inside Docker** (see [Debug with API in Docker](#6-debug-with-api-in-docker)).
+   - **Pytest: current file** – run/debug only the open test file.
+   - **Pytest: all** – run/debug all tests under `tests/`.
+3. Press **F5** (or **Start Debugging**).
 
-### 5. Uso no dia a dia
+### 5. Day-to-day usage
 
-- **Breakpoints**: clique na margem esquerda da linha (ou use o menu de contexto) para colocar um breakpoint.
-- **API**: após iniciar **FastAPI (debug)**, a API fica em `http://localhost:8000`. Faça requisições (navegador, curl, Postman, etc.) e o debugger para nos breakpoints.
-- **Testes**: abra um arquivo em `tests/`, escolha **Pytest: current file** e F5 para debugar só aquele arquivo; ou use **Pytest: all** para debugar a suíte inteira.
+- **Breakpoints**: click the gutter (or use the context menu) to set breakpoints.
+- **API**: after **FastAPI (debug)**, call `http://localhost:8000` (browser, curl, Postman, etc.); execution stops at breakpoints.
+- **Tests**: open a file under `tests/`, choose **Pytest: current file** and F5; or **Pytest: all** for the full suite.
 
-### 6. Debug com a API no Docker
+### 6. Debug with API in Docker
 
-Para debugar a API **rodando dentro do container** (com debugpy em modo “listen”):
+To debug the API **inside the container** (debugpy listen mode):
 
-1. No `.env`, defina `DEBUGPY=1` (ou exporte no terminal: `export DEBUGPY=1`).
-2. **Reconstrua a imagem** para o container ter o `debugpy`: `docker compose build api` (ou `make recreate`).
-3. Suba os serviços: `make up` (ou `docker compose up -d`).
-4. No editor: **Run and Debug** → **FastAPI (attach to Docker)** → **F5**.
-5. O debugger conecta na porta **5678**. A API continua em **http://localhost:8000** — use esse endereço para requisições e breakpoints.
+1. Set `DEBUGPY=1` in `.env` (or `export DEBUGPY=1`).
+2. **Rebuild** so the image includes debugpy: `docker compose build api` (or `make recreate`).
+3. Start services: `make up` (or `docker compose up -d`).
+4. In the editor: **Run and Debug** → **FastAPI (attach to Docker)** → **F5**.
+5. Debugger attaches on port **5678**. The API is still at **http://localhost:8000**.
 
-O **Dockerfile** instala o `debugpy` via `uv sync`. O **docker-compose** expõe a porta **5678** (debugger) e a **8000** (API). Com `DEBUGPY=1`, o entrypoint inicia com `debugpy --listen 0.0.0.0:5678` e o uvicorn segue na 8000.
+The **Dockerfile** installs `debugpy` via `uv sync`. **docker-compose** exposes **5678** (debugger) and **8000** (API). With `DEBUGPY=1`, the entrypoint runs `debugpy --listen 0.0.0.0:5678` and uvicorn on 8000.
 
-**Se http://localhost:8000 não abrir** com o debug ativado no Docker: confira se o container está de pé (`docker compose ps` e `docker compose logs api`). Se o container cair ou der erro de módulo, reconstrua: `docker compose build api` e `docker compose up -d`. Garanta que não há outro processo usando a porta 8000.
+**If http://localhost:8000 does not respond** with Docker debug: check the container (`docker compose ps`, `docker compose logs api`). Rebuild if it crashes or errors on imports: `docker compose build api` and `docker compose up -d`. Ensure nothing else is bound to port 8000.
 
-### 7. Resumo rápido (para reativar o debug depois)
+### 7. Quick recap (re-enable debug later)
 
-**API na sua máquina (sem Docker):**
+**API on your machine (no Docker for the app):**
 
-1. `make install` (se ainda não tiver feito).
-2. `make up` (só MongoDB; se for debugar a API).
-3. `.env` com `MONGODB_URI=mongodb://localhost:27017` para debug local da API.
-4. **Python: Select Interpreter** → escolher o `.venv` do projeto.
-5. **Run and Debug** → **FastAPI (debug)** ou **Pytest: current file** / **Pytest: all** → **F5**.
+1. `make install` if needed.
+2. `make up` (MongoDB only, if debugging the API).
+3. `.env` with `MONGODB_URI=mongodb://localhost:27017` for local API debug.
+4. **Python: Select Interpreter** → project `.venv`.
+5. **Run and Debug** → **FastAPI (debug)** or **Pytest: current file** / **Pytest: all** → **F5**.
 
-**API dentro do Docker:**
+**API inside Docker:**
 
-1. No `.env`: `DEBUGPY=1`.
+1. `.env`: `DEBUGPY=1`.
 2. `make up`.
 3. **Run and Debug** → **FastAPI (attach to Docker)** → **F5**.
 

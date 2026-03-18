@@ -65,14 +65,24 @@ def _iter_urls(text: str) -> Iterable[str]:
 
 
 def _normalize_url(url: str) -> str | None:
-    parsed = urlparse(url if url.startswith(("http://", "https://")) else f"https://{url}")
+    """
+    Normalize URL for storage/display. Missing scheme defaults to https.
+    Non-https schemes are upgraded to https (LinkedIn/GitHub support it; avoids clear-text URLs).
+    """
+    candidate = url.strip()
+    if not candidate:
+        return None
+    if "://" not in candidate:
+        candidate = f"https://{candidate}"
+    parsed = urlparse(candidate)
     if not parsed.netloc:
         return None
-    scheme = parsed.scheme or "https"
+    scheme = (parsed.scheme or "https").lower()
+    if scheme != "https":
+        scheme = "https"
     netloc = parsed.netloc.lower()
     path = parsed.path or ""
-    normalized = f"{scheme}://{netloc}{path}"
-    return normalized
+    return f"{scheme}://{netloc}{path}"
 
 
 def _classify_url(normalized: str) -> tuple[str | None, str | None]:
@@ -126,8 +136,8 @@ def _looks_like_heading(text: str) -> bool:
 
 def _starts_with_section_heading(text: str) -> bool:
     """
-    Summary pode conter a palavra "experience" no meio da frase, então
-    detectamos headings apenas quando o texto começa com eles.
+    Summary text may contain words like "experience" mid-sentence; treat as a section
+    heading only when the paragraph starts with one of the known section labels.
     """
     lowered = text.strip().lower()
     return (
@@ -176,8 +186,8 @@ def extract_summary(text: str) -> str | None:
     if len(paragraphs) < 2:
         return None
 
-    # O summary esperado é o parágrafo imediatamente após o bloco do "header"
-    # (nome/email/links), que normalmente fica separado por uma linha em branco.
+    # Expected summary is the paragraph right after the header block (name/email/links),
+    # usually separated by a blank line.
     candidate = paragraphs[1]
     if _starts_with_section_heading(candidate):
         return None

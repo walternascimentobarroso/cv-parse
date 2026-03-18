@@ -8,6 +8,9 @@ RED=\033[0;31m
 
 .PHONY: install up down recreate logs run test test-unit test-api test-integration lint lint-fix check format format-check validate typecheck deactivate clear-branches
 
+# -T avoids "not a TTY" during pre-push; env vars keep colored output (pytest, ruff, etc.).
+DOCKER_EXEC_API = docker compose exec -T -e FORCE_COLOR=1 -e PY_COLORS=1 -e TERM=xterm-256color api
+
 install:
 	uv sync
 
@@ -27,7 +30,7 @@ run:
 	uv run uvicorn src.main:app --host 0.0.0.0 --port 8000
 
 test:
-	docker compose exec api uv run pytest --cov=src --cov-report=term-missing tests/
+	$(DOCKER_EXEC_API) uv run pytest --color=yes --cov=src --cov-report=term-missing tests/
 
 test-unit:
 	uv run pytest tests/domain/
@@ -39,16 +42,16 @@ test-integration:
 	uv run pytest tests/infra/
 
 lint:
-	docker compose exec api uv run ruff check .
+	$(DOCKER_EXEC_API) uv run ruff check .
 
 format:
-	docker compose exec api uv run ruff format .
+	$(DOCKER_EXEC_API) uv run ruff format .
 
 lint-fix:
-	docker compose exec api uv run ruff check . --fix
+	$(DOCKER_EXEC_API) uv run ruff check . --fix
 
 typecheck:
-	docker compose exec api uv run pyright
+	$(DOCKER_EXEC_API) uv run pyright
 
 validate:
 	$(MAKE) format
