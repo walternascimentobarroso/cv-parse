@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from src.infra.extractors.base import DocumentExtractorStrategy
 from src.infra.extractors.pdf import PdfExtractor
 from src.infra.extractors.plain_text import PlainTextExtractor
@@ -46,7 +48,7 @@ def test_plain_text_extractor_empty_and_non_empty() -> None:
         raise AssertionError(f"Expected 'hello', got {result!r}")
 
 
-def test_pdf_extractor_happy_path_and_empty(monkeypatch: object) -> None:
+def test_pdf_extractor_happy_path_and_empty(monkeypatch: pytest.MonkeyPatch) -> None:
     extractor = PdfExtractor()
 
     class FakePage:
@@ -79,7 +81,7 @@ def test_pdf_extractor_happy_path_and_empty(monkeypatch: object) -> None:
         raise AssertionError(f"Expected joined page text, got {result!r}")
 
 
-def test_pdf_extractor_logs_and_raises_on_failure(monkeypatch: object) -> None:
+def test_pdf_extractor_logs_and_raises_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
     extractor = PdfExtractor()
 
     import src.infra.extractors.pdf as pdf_module

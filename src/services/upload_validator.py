@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
+from typing import Protocol
 
 from fastapi import UploadFile
 
-from src.infra.config import Settings
 from src.infra.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -37,6 +38,14 @@ class ValidationError:
 ValidationResult = ValidationOk | ValidationError
 
 
+class UploadValidationSettings(Protocol):
+    @property
+    def allowed_content_types(self) -> Sequence[str]: ...
+
+    @property
+    def max_document_size_bytes(self) -> int: ...
+
+
 def _detail_unsupported(supported: list[str]) -> str:
     return (
         "Unsupported document format. "
@@ -53,7 +62,7 @@ def _detail_size_exceeded(max_bytes: int) -> str:
 
 async def validate_upload(
     file: UploadFile | None,
-    settings: Settings,
+    settings: UploadValidationSettings,
 ) -> ValidationResult:
     """
     Validate upload: presence, content type, size (via chunked read).

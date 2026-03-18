@@ -1,10 +1,15 @@
 """API tests for routes (HTTP endpoints). Use TestClient; no real DB or live server."""
 
+from __future__ import annotations
+
+from typing import Any, cast
+
+import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
 from src.api.dependencies import get_extractor
-from src.infra.config import Settings
-from src.services.upload_validator import ValidationOk
+from src.services.upload_validator import UploadValidationSettings, ValidationOk
 
 
 def test_health(client: TestClient) -> None:
@@ -69,10 +74,16 @@ def test_extract_too_large(client: TestClient) -> None:
         raise AssertionError(f"Expected size error in detail: {response.json()['detail']}")
 
 
-def test_extract_zero_size_short_circuits(client: TestClient, monkeypatch: object) -> None:
+def test_extract_zero_size_short_circuits(
+    client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     """When validator returns size_bytes == 0, route should return empty ExtractResponse."""
 
-    async def fake_validate_upload(file, settings: Settings) -> ValidationOk:  # type: ignore[override]
+    async def fake_validate_upload(
+        file: Any,
+        settings: UploadValidationSettings,
+    ) -> ValidationOk:
         return ValidationOk(
             content=b"",
             content_type="text/plain",
@@ -105,7 +116,7 @@ def test_extract_internal_error(client: TestClient) -> None:
     def override_extractor():
         return FailingExtractor()
 
-    app = client.app
+    app = cast(FastAPI, client.app)
     app.dependency_overrides[get_extractor] = override_extractor
     try:
         files = {"file": ("test.txt", b"hello", "text/plain")}
@@ -315,10 +326,10 @@ def test_update_extraction_empty_body_uses_existing_document(client: TestClient)
 
 def test_update_extraction_not_found_after_valid_id(
     client: TestClient,
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Simulate repo.update returning None to exercise 404 branch."""
-    app = client.app
+    app = cast(FastAPI, client.app)
     repo = app.state.extraction_repo
 
     async def fake_update(extraction_id: str, payload: dict):  # type: ignore[override]
@@ -376,10 +387,10 @@ def test_restore_not_found_returns_404(client: TestClient) -> None:
 
 def test_restore_404_when_document_missing_after_restore(
     client: TestClient,
-    monkeypatch: object,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Simulate repo.restore succeeding but repo.find_by_id returning None."""
-    app = client.app
+    app = cast(FastAPI, client.app)
     repo = app.state.extraction_repo
 
     async def fake_restore(extraction_id: str) -> str:  # type: ignore[override]

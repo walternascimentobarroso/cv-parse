@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
+from typing import AsyncIterator, Iterator
 
 import pytest
 from fastapi import FastAPI
@@ -114,7 +115,7 @@ class InMemoryExtractionRepository:
 
 
 @asynccontextmanager
-async def _test_lifespan(app: FastAPI):
+async def _test_lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Lifespan that sets app.state with in-memory repo and registry; no MongoDB."""
     await asyncio.sleep(0)  # Yield control so this context manager is genuinely async
     app.state.extraction_repo = InMemoryExtractionRepository()
@@ -134,7 +135,7 @@ def test_app() -> FastAPI:
 
 
 @pytest.fixture(scope="session")
-def client(test_app: FastAPI) -> TestClient:
+def client(test_app: FastAPI) -> Iterator[TestClient]:
     """TestClient for API tests; uses test app so no real DB is required."""
     with TestClient(test_app) as test_client:
         yield test_client

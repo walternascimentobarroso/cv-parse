@@ -28,3 +28,8 @@ relative_files = true
 testpaths = ["tests"]
 pythonpath = ["."]
 
+[dependency-groups]
+dev = [
+    "pyright>=1.1.408",
+]
+

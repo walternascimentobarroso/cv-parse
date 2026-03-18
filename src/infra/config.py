@@ -1,7 +1,7 @@
 import json
 from functools import lru_cache
 
-from pydantic import Field, computed_field
+from pydantic import Field, computed_field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEFAULT_ALLOWED_CONTENT_TYPES = "application/pdf,text/plain"
@@ -34,8 +34,10 @@ class Settings(BaseSettings):
     # the default here and rely on pytest/CI to point cwd and env correctly.
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
-    mongodb_uri: str = Field(alias="MONGODB_URI")
-    mongodb_db: str = Field(alias="MONGODB_DB")
+    # NOTE: these are required at runtime, but Pyright doesn't understand
+    # "required via env var" semantics. We provide defaults and validate.
+    mongodb_uri: str = Field(default="", alias="MONGODB_URI")
+    mongodb_db: str = Field(default="", alias="MONGODB_DB")
     extractions_collection: str = Field(default="extractions", alias="EXTRACTIONS_COLLECTION")
     # Consumed from env so Pydantic allows it; actual use is in docker-entrypoint.sh
     debugpy: str = Field(default="", alias="DEBUGPY")
@@ -51,6 +53,14 @@ class Settings(BaseSettings):
     @property
     def allowed_content_types(self) -> list[str]:
         return _parse_allowed_content_types(self.allowed_content_types_raw)
+
+    @field_validator("mongodb_uri", "mongodb_db")
+    @classmethod
+    def _require_non_empty(cls, v: str) -> str:
+        s = (v or "").strip()
+        if not s:
+            raise ValueError("MongoDB settings must be provided via environment variables.")
+        return s
 
 
 @lru_cache(maxsize=1)

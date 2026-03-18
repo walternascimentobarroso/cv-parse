@@ -30,6 +30,7 @@ This installs dependencies with uv and starts the API and MongoDB. The API is av
 - `make run` – Run the app locally with uv
 - `make test` – Run tests
 - `make lint` – Run Ruff
+- `make typecheck` – Run Pyright inside the API container (rebuild the image after Dockerfile changes: `make recreate`)
 
 ## Environment configuration
 

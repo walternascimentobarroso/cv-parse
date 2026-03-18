@@ -3,24 +3,35 @@
 from __future__ import annotations
 
 import asyncio
-from types import SimpleNamespace
+from dataclasses import dataclass
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.services.upload_validator import ValidationError, ValidationOk, validate_upload
+from src.services.upload_validator import (
+    UploadValidationSettings,
+    ValidationError,
+    ValidationOk,
+    validate_upload,
+)
+
+
+@dataclass(frozen=True)
+class _TestSettings:
+    allowed_content_types: list[str]
+    max_document_size_bytes: int
 
 
 @pytest.fixture
-def settings() -> SimpleNamespace:
+def settings() -> UploadValidationSettings:
     """Minimal settings object for validator (allowed_content_types, max_document_size_bytes)."""
-    return SimpleNamespace(
+    return _TestSettings(
         allowed_content_types=["application/pdf", "text/plain"],
         max_document_size_bytes=100,
     )
 
 
-def test_validate_upload_missing_file(settings: SimpleNamespace) -> None:
+def test_validate_upload_missing_file(settings: UploadValidationSettings) -> None:
     result = asyncio.run(validate_upload(None, settings))
     if not isinstance(result, ValidationError):
         raise AssertionError(f"Expected ValidationError, got {type(result)}")
@@ -30,7 +41,7 @@ def test_validate_upload_missing_file(settings: SimpleNamespace) -> None:
         raise AssertionError(f"Expected 'required' in detail: {result.detail}")
 
 
-def test_validate_upload_unsupported_type(settings: SimpleNamespace) -> None:
+def test_validate_upload_unsupported_type(settings: UploadValidationSettings) -> None:
     file = MagicMock(spec=["read", "content_type", "filename"])
     file.content_type = "image/jpeg"
     file.filename = "x.jpg"
@@ -44,7 +55,7 @@ def test_validate_upload_unsupported_type(settings: SimpleNamespace) -> None:
         raise AssertionError(f"Expected 'Unsupported' in detail: {result.detail}")
 
 
-def test_validate_upload_size_exceeded(settings: SimpleNamespace) -> None:
+def test_validate_upload_size_exceeded(settings: UploadValidationSettings) -> None:
     file = MagicMock(spec=["read", "content_type", "filename"])
     file.content_type = "text/plain"
     file.filename = "big.txt"
@@ -56,7 +67,7 @@ def test_validate_upload_size_exceeded(settings: SimpleNamespace) -> None:
         raise AssertionError(f"Expected 413, got {result.status_code}")
 
 
-def test_validate_upload_ok_plain_text(settings: SimpleNamespace) -> None:
+def test_validate_upload_ok_plain_text(settings: UploadValidationSettings) -> None:
     file = MagicMock(spec=["read", "content_type", "filename"])
     file.content_type = "text/plain"
     file.filename = "t.txt"

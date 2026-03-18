@@ -1,5 +1,7 @@
 """Unit tests for document extractor (domain layer). No server or external systems."""
 
+import pytest
+
 from src.domain.extractor import SimpleDocumentExtractor
 
 
@@ -11,7 +13,7 @@ def test_plain_text_extraction() -> None:
         raise AssertionError(f"Expected 'hello world', got {result!r}")
 
 
-def test_pdf_extraction_uses_pdf_handler(monkeypatch: object) -> None:
+def test_pdf_extraction_uses_pdf_handler(monkeypatch: pytest.MonkeyPatch) -> None:
     extractor = SimpleDocumentExtractor(["application/pdf"])
 
     def fake_extract_pdf(content: bytes) -> str:
@@ -58,7 +60,7 @@ def test_extract_empty_content_returns_empty() -> None:
         raise AssertionError(f"Expected empty string for empty content, got {result!r}")
 
 
-def test_extract_pdf_reads_pages(monkeypatch: object) -> None:
+def test_extract_pdf_reads_pages(monkeypatch: pytest.MonkeyPatch) -> None:
     """Exercise SimpleDocumentExtractor._extract_pdf happy path."""
 
     class FakePage:

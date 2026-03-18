@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from src.infra.config import Settings, _default_content_types_list, _parse_allowed_content_types
 
 
@@ -45,4 +47,12 @@ def test_parse_allowed_content_types_json_non_list_uses_default() -> None:
     default_values = _default_content_types_list()
     if result != default_values:
         raise AssertionError(f"Expected default content types for non-list JSON, got {result!r}")
+
+
+def test_settings_mongodb_validator_rejects_blank() -> None:
+    """Covers _require_non_empty when URI/DB missing (Pyright-friendly defaults)."""
+    with pytest.raises(ValueError, match="MongoDB settings must be provided"):
+        Settings._require_non_empty("")
+    with pytest.raises(ValueError, match="MongoDB settings must be provided"):
+        Settings._require_non_empty("   ")
 
