@@ -1,21 +1,17 @@
 <!--
 Sync Impact Report
-- Version change: [none] → 1.0.0
+- Version change: 1.0.0 → 1.1.0
 - Modified principles:
-  - [PRINCIPLE_1_NAME] → Single-Responsibility Modules
-  - [PRINCIPLE_2_NAME] → Simplicity Over Features (YAGNI)
-  - [PRINCIPLE_3_NAME] → Testable, Isolated Code
-  - [PRINCIPLE_4_NAME] → Explicit Boundaries & Dependencies
-  - [PRINCIPLE_5_NAME] → Consistent Style & Readability
+  - II. Simplicity Over Features (YAGNI): clarified avoidance of LLM dependencies until explicitly required
+  - III. Testable, Isolated Code: emphasized deterministic parsing and validation for CV data
 - Added sections:
-  - Clean Code Constraints for a Small Project
-  - Development Workflow & Quality Gates
+  - CV Parsing System Principles
 - Removed sections:
   - None
 - Templates:
-  - .specify/templates/plan-template.md: ✅ updated/aligned (Constitution Check references gates generically)
-  - .specify/templates/spec-template.md: ✅ aligned with Clean Code focus
-  - .specify/templates/tasks-template.md: ✅ aligned (emphasizes incremental, testable work)
+  - .specify/templates/plan-template.md: ✅ aligned (Constitution Check remains generic and applicable)
+  - .specify/templates/spec-template.md: ✅ updated/aligned (requirements now emphasize CV parsing rules, normalization, validation)
+  - .specify/templates/tasks-template.md: ✅ aligned (supports incremental, independently testable parsing work)
   - .specify/templates/commands/*.md: ⚠ pending (no command templates defined; add if new workflows are introduced)
 - Deferred TODOs:
   - TODO(GUIDANCE_FILE): define runtime development guidance document (e.g., docs/quickstart.md)
@@ -43,7 +39,9 @@ The project MUST stay **small and simple by default**. Only features
 that are needed now, based on real usage scenarios, MAY be implemented.
 Layers, abstractions, or frameworks introduced “for the future only”
 are forbidden. External dependencies MUST be kept to the minimum
-necessary and chosen only when they bring clear and immediate benefit.
+necessary and chosen only when they bring clear and immediate benefit,
+and machine-learning/LLM dependencies MUST NOT be introduced unless a
+feature explicitly requires them.
 
 **Rationale**: Applying YAGNI avoids accidental complexity, reduces dead
 code, and lowers the cognitive load needed to understand and modify the
@@ -58,7 +56,8 @@ Rule of thumb:
 - Access to IO (database, network, filesystem) MUST be encapsulated in
   clear interfaces or adapters.
 - Whenever possible, automated tests SHOULD be added for critical
-  behaviors before or right after implementation.
+  behaviors (including CV parsing, normalization, and validation) before
+  or right after implementation.
 
 **Rationale**: In a small project, a lean but focused test suite
 provides safety to refactor, keep Clean Code, and evolve without fear of
@@ -110,6 +109,54 @@ simple, and aligned with Clean Code.
 - **Simple folder structure**: Keep a shallow hierarchy, with folders
   named by responsibility (for example, `domain/`, `infra/`, `ui/` or
   the equivalent in the chosen language).
+
+## CV Parsing System Principles
+
+The CV parsing system is responsible for extracting, structuring, and
+validating personal information from CV documents while respecting Clean
+Architecture and DDD boundaries and preserving existing document
+structure.
+
+- **Data shape and location**:
+  - Personal data MUST be stored inside `parsed_data.personal_info`.
+  - The following keys MUST be supported:
+    - `full_name`
+    - `email`
+    - `phone` (optional)
+    - `linkedin` (optional)
+    - `github` (optional)
+    - `summary` (biography/about section)
+  - Existing fields in `parsed_data` MUST NOT be renamed or removed; new
+    fields MUST be added in a backward-compatible way only.
+- **Extraction strategy**:
+  - Email addresses and profile links (LinkedIn, GitHub) MUST use
+    deterministic extraction (for example, regex and rule-based
+    parsing).
+  - Full name and summary extraction MAY use heuristic parsing (for
+    example, position in the document, section headings, simple rules),
+    but MUST NOT depend on LLMs or external AI services at this stage.
+  - The parsing flow MUST be organized so that future AI-based
+    extractors can be plugged in behind abstractions without changing
+    callers (for example, strategy interfaces or domain services).
+- **Normalization and validation**:
+  - All extracted fields MUST be normalized before persistence (for
+    example, trimming whitespace, normalizing email case, standardizing
+    phone format where possible, normalizing URLs).
+  - Validation MUST be applied at the domain boundary (for example,
+    validating email shape, rejecting clearly invalid URLs, recording
+    validation errors where appropriate).
+  - Invalid or missing optional fields MUST NOT break the overall
+    parsing flow; instead, they MUST be represented as `null`/absent
+    values or collected as non-fatal validation issues.
+- **Architecture and boundaries**:
+  - Parsing and normalization rules MUST live in the domain layer (or a
+    dedicated parsing domain module), independent from frameworks.
+  - Infrastructure concerns (PDF parsing, storage, HTTP transport) MUST
+    remain in their respective layers and MUST depend on domain
+    contracts, not the other way around.
+  - Controllers/handlers (for example, FastAPI routes) MUST delegate to
+    domain services for parsing logic and MUST NOT contain business
+    rules.
 
 ## Development Workflow & Quality Gates
 

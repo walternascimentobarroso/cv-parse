@@ -90,6 +90,21 @@
 - **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
 - **FR-005**: System MUST [behavior, e.g., "log all security events"]
 
+When the feature involves CV parsing, requirements MUST explicitly cover:
+
+- Storage of personal information under `parsed_data.personal_info`
+  with, at a minimum, `full_name`, `email`, `phone?`, `linkedin?`,
+  `github?`, and `summary`.
+- Deterministic extraction (for example, regex/rules) for email and
+  profile links, and heuristic, non-LLM parsing for full name and
+  summary.
+- Normalization and validation rules for all extracted fields
+  (trimming, casing, formats, URL normalization, and validation of
+  shapes where applicable).
+- Backward-compatible changes only to the existing data structure and a
+  design that can be extended later with AI-based extractors without
+  breaking existing callers.
+
 *Example of marking unclear requirements:*
 
 - **FR-006**: System MUST authenticate users via [NEEDS CLARIFICATION: auth method not specified - email/password, SSO, OAuth?]

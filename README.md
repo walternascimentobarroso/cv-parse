@@ -28,7 +28,7 @@ This installs dependencies with uv and starts the API and MongoDB. The API is av
 - `make down` – Stop and remove containers
 - `make logs` – Follow service logs
 - `make run` – Run the app locally with uv
-- `make test` – Run tests
+- `make test` – Run tests (requires local Docker access; run directly on your machine)
 - `make lint` – Run Ruff
 - `make typecheck` – Run Pyright inside the API container (rebuild the image after Dockerfile changes: `make recreate`)
 

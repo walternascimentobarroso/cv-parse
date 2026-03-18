@@ -15,6 +15,7 @@ class CvParsedData:
     education: list[dict]
     skills: list[str]
     certifications: list[str]
+    personal_info: dict[str, str | None]
 
 
 def parse_cv(raw_text: str) -> CvParsedData:
@@ -44,10 +45,17 @@ def parse_cv(raw_text: str) -> CvParsedData:
 
     certifications = parse_certifications_section(certifications_section)
 
+    from src.domain.personal_info.services.personal_info_extractor import (
+        extract_personal_info,
+    )
+
+    personal_info = extract_personal_info(raw_text)
+
     return CvParsedData(
         experience=experience,
         education=education,
         skills=skills,
         certifications=certifications,
+        personal_info=personal_info,
     )
 

@@ -16,6 +16,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-11
 - MongoDB (Motor async driver) (005-extractions-crud-audit)
 - Python 3.12 + FastAPI, Motor (async MongoDB driver), Pydantic, pdfplumber, pydantic-settings (006-structured-cv-parsing)
 - MongoDB (existing CV collection; extended document shape with `parsed_data`) (006-structured-cv-parsing)
+- Python 3.12 + FastAPI, Motor (MongoDB), pdfplumber, Pydantic, project-specific parsing utilities (007-extract-personal-info)
+- MongoDB (existing flexible schema; no new collections) (007-extract-personal-info)
 
 - Python 3.12 (existing; from 001-doc-to-text-api) + Unchanged from 001 (FastAPI, motor, pdfplumber, pydantic-settings, etc.); managed via uv and `pyproject.toml` (002-dev-env-tooling)
 
@@ -46,9 +48,9 @@ tests/           # Mirror src: tests/domain, tests/api, tests/infra
 Python 3.12 (existing; from 001-doc-to-text-api): Follow standard conventions
 
 ## Recent Changes
+- 007-extract-personal-info: Added Python 3.12 + FastAPI, Motor (MongoDB), pdfplumber, Pydantic, project-specific parsing utilities
 - 006-structured-cv-parsing: Added Python 3.12 + FastAPI, Motor (async MongoDB driver), Pydantic, pdfplumber, pydantic-settings
 - 005-extractions-crud-audit: Added Python 3.12 + FastAPI, Motor (async MongoDB), Pydantic
-- 004-cv-api-refactor: Added Python 3.12 + FastAPI, motor, pdfplumber, pydantic-settings
 
 
 <!-- MANUAL ADDITIONS START -->
