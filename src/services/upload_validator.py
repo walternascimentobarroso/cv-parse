@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Protocol
-
-from fastapi import UploadFile
+from typing import TYPE_CHECKING, Protocol
 
 from src.infra.logging_config import get_logger
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
+
+    from fastapi import UploadFile
 
 logger = get_logger(__name__)
 

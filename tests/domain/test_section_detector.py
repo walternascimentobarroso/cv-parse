@@ -13,13 +13,15 @@ def test_split_empty_text_returns_empty_sections() -> None:
         "languages": "",
     }
     if result != expected:
-        raise AssertionError(f"Expected {expected!r}, got {result!r}")
+        msg = f"Expected {expected!r}, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_split_whitespace_only_returns_empty_sections() -> None:
     result = split_into_sections("   \n  \n  ")
     if result["experience"] != "" or result["education"] != "":
-        raise AssertionError(f"Expected empty sections, got {result!r}")
+        msg = f"Expected empty sections, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_split_experience_heading_variants() -> None:
@@ -34,8 +36,9 @@ def test_split_experience_heading_variants() -> None:
         text = f"{heading}:\nSoftware Engineer at Acme"
         result = split_into_sections(text)
         if "Software Engineer at Acme" not in result["experience"]:
+            msg = f"For heading {heading!r}, expected content in experience, got {result!r}"
             raise AssertionError(
-                f"For heading {heading!r}, expected content in experience, got {result!r}",
+                msg,
             )
 
 
@@ -45,8 +48,9 @@ def test_split_education_heading_variants() -> None:
         text = f"{heading}\nMIT 2020"
         result = split_into_sections(text)
         if "MIT 2020" not in result["education"]:
+            msg = f"For heading {heading!r}, expected content in education, got {result!r}"
             raise AssertionError(
-                f"For heading {heading!r}, expected content in education, got {result!r}",
+                msg,
             )
 
 
@@ -56,8 +60,9 @@ def test_split_skills_heading_variants() -> None:
         text = f"{heading}\nPython, Java"
         result = split_into_sections(text)
         if "Python, Java" not in result["skills"]:
+            msg = f"For heading {heading!r}, expected content in skills, got {result!r}"
             raise AssertionError(
-                f"For heading {heading!r}, expected content in skills, got {result!r}",
+                msg,
             )
 
 
@@ -72,8 +77,9 @@ def test_split_certifications_heading_variants() -> None:
         text = f"{heading}\nAWS Certified"
         result = split_into_sections(text)
         if "AWS Certified" not in result["certifications"]:
+            msg = f"For heading {heading!r}, expected content in certifications, got {result!r}"
             raise AssertionError(
-                f"For heading {heading!r}, expected content in certifications, got {result!r}",
+                msg,
             )
 
 
@@ -81,23 +87,27 @@ def test_split_normalises_heading_strip_and_colon() -> None:
     text = "  Experience  :  \nJob at X"
     result = split_into_sections(text)
     if "Job at X" not in result["experience"]:
-        raise AssertionError(f"Expected normalised heading to match, got {result!r}")
+        msg = f"Expected normalised heading to match, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_split_unknown_heading_ignored_until_known() -> None:
     text = "Summary\nSome intro\nExperience\nEngineer at Y"
     result = split_into_sections(text)
     if "Engineer at Y" not in result["experience"]:
-        raise AssertionError(f"Expected content after Experience only, got {result!r}")
+        msg = f"Expected content after Experience only, got {result!r}"
+        raise AssertionError(msg)
     if "Some intro" in result["experience"]:
-        raise AssertionError("Lines before first known heading should not appear in any section")
+        msg = "Lines before first known heading should not appear in any section"
+        raise AssertionError(msg)
 
 
 def test_split_empty_lines_preserved_in_section() -> None:
     text = "Experience\nLine one\n\nLine two"
     result = split_into_sections(text)
     if "Line one" not in result["experience"] or "Line two" not in result["experience"]:
-        raise AssertionError(f"Expected both lines in experience, got {result!r}")
+        msg = f"Expected both lines in experience, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_split_multiple_sections() -> None:
@@ -115,20 +125,25 @@ AWS
 """
     result = split_into_sections(text)
     if "Dev at Acme" not in result["experience"]:
-        raise AssertionError(f"Expected experience content, got {result['experience']!r}")
+        msg = f"Expected experience content, got {result['experience']!r}"
+        raise AssertionError(msg)
     if "MIT 2015" not in result["education"]:
-        raise AssertionError(f"Expected education content, got {result['education']!r}")
+        msg = f"Expected education content, got {result['education']!r}"
+        raise AssertionError(msg)
     if "Python" not in result["skills"]:
-        raise AssertionError(f"Expected skills content, got {result['skills']!r}")
+        msg = f"Expected skills content, got {result['skills']!r}"
+        raise AssertionError(msg)
     if "AWS" not in result["certifications"]:
-        raise AssertionError(f"Expected certifications content, got {result['certifications']!r}")
+        msg = f"Expected certifications content, got {result['certifications']!r}"
+        raise AssertionError(msg)
 
 
 def test_split_leading_empty_lines_then_heading() -> None:
     text = "\n\nExperience\nContent"
     result = split_into_sections(text)
     if result["experience"] != "Content":
-        raise AssertionError(f"Expected 'Content' in experience, got {result['experience']!r}")
+        msg = f"Expected 'Content' in experience, got {result['experience']!r}"
+        raise AssertionError(msg)
 
 
 def test_split_languages_heading_stops_certifications() -> None:
@@ -136,6 +151,8 @@ def test_split_languages_heading_stops_certifications() -> None:
     text = "Certifications\nAWS Certified\nLanguages\nPortuguese (Native)"
     result = split_into_sections(text)
     if "Portuguese" in result["certifications"]:
-        raise AssertionError("Languages content must not appear in certifications")
+        msg = "Languages content must not appear in certifications"
+        raise AssertionError(msg)
     if "Portuguese" not in result["languages"]:
-        raise AssertionError("Languages content must appear in languages section")
+        msg = "Languages content must appear in languages section"
+        raise AssertionError(msg)

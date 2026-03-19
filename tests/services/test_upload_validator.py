@@ -34,11 +34,14 @@ def settings() -> UploadValidationSettings:
 def test_validate_upload_missing_file(settings: UploadValidationSettings) -> None:
     result = asyncio.run(validate_upload(None, settings))
     if not isinstance(result, ValidationError):
-        raise AssertionError(f"Expected ValidationError, got {type(result)}")
+        msg = f"Expected ValidationError, got {type(result)}"
+        raise AssertionError(msg)
     if result.status_code != 400:
-        raise AssertionError(f"Expected 400, got {result.status_code}")
+        msg = f"Expected 400, got {result.status_code}"
+        raise AssertionError(msg)
     if "required" not in result.detail.lower():
-        raise AssertionError(f"Expected 'required' in detail: {result.detail}")
+        msg = f"Expected 'required' in detail: {result.detail}"
+        raise AssertionError(msg)
 
 
 def test_validate_upload_unsupported_type(settings: UploadValidationSettings) -> None:
@@ -48,11 +51,14 @@ def test_validate_upload_unsupported_type(settings: UploadValidationSettings) ->
     file.read = AsyncMock(return_value=b"")
     result = asyncio.run(validate_upload(file, settings))
     if not isinstance(result, ValidationError):
-        raise AssertionError(f"Expected ValidationError, got {type(result)}")
+        msg = f"Expected ValidationError, got {type(result)}"
+        raise AssertionError(msg)
     if result.status_code != 400:
-        raise AssertionError(f"Expected 400, got {result.status_code}")
+        msg = f"Expected 400, got {result.status_code}"
+        raise AssertionError(msg)
     if "Unsupported" not in result.detail:
-        raise AssertionError(f"Expected 'Unsupported' in detail: {result.detail}")
+        msg = f"Expected 'Unsupported' in detail: {result.detail}"
+        raise AssertionError(msg)
 
 
 def test_validate_upload_size_exceeded(settings: UploadValidationSettings) -> None:
@@ -62,9 +68,11 @@ def test_validate_upload_size_exceeded(settings: UploadValidationSettings) -> No
     file.read = AsyncMock(side_effect=[b"x" * 50, b"x" * 60])  # 110 bytes > 100
     result = asyncio.run(validate_upload(file, settings))
     if not isinstance(result, ValidationError):
-        raise AssertionError(f"Expected ValidationError, got {type(result)}")
+        msg = f"Expected ValidationError, got {type(result)}"
+        raise AssertionError(msg)
     if result.status_code != 413:
-        raise AssertionError(f"Expected 413, got {result.status_code}")
+        msg = f"Expected 413, got {result.status_code}"
+        raise AssertionError(msg)
 
 
 def test_validate_upload_ok_plain_text(settings: UploadValidationSettings) -> None:
@@ -74,10 +82,14 @@ def test_validate_upload_ok_plain_text(settings: UploadValidationSettings) -> No
     file.read = AsyncMock(side_effect=[b"hello", b""])  # first chunk then EOF
     result = asyncio.run(validate_upload(file, settings))
     if not isinstance(result, ValidationOk):
-        raise AssertionError(f"Expected ValidationOk, got {type(result)}")
+        msg = f"Expected ValidationOk, got {type(result)}"
+        raise AssertionError(msg)
     if result.content != b"hello":
-        raise AssertionError(f"Expected b'hello', got {result.content}")
+        msg = f"Expected b'hello', got {result.content}"
+        raise AssertionError(msg)
     if result.size_bytes != 5:
-        raise AssertionError(f"Expected size 5, got {result.size_bytes}")
+        msg = f"Expected size 5, got {result.size_bytes}"
+        raise AssertionError(msg)
     if result.content_type != "text/plain":
-        raise AssertionError(f"Expected text/plain, got {result.content_type}")
+        msg = f"Expected text/plain, got {result.content_type}"
+        raise AssertionError(msg)

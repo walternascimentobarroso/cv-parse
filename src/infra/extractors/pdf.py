@@ -27,4 +27,5 @@ class PdfExtractor:
             return "\n".join(texts).strip()
         except Exception as exc:
             logger.exception("pdf_extraction_failure", extra={"error": str(exc)})
-            raise ValueError(f"PDF extraction failed: {exc}") from exc
+            msg = f"PDF extraction failed: {exc}"
+            raise ValueError(msg) from exc

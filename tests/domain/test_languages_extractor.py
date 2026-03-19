@@ -7,7 +7,9 @@ French: Professional
 """
     r = extract_languages(text)
     if len(r) < 2:
-        raise AssertionError(f"Expected 2 languages, got {r!r}")
+        msg = f"Expected 2 languages, got {r!r}"
+        raise AssertionError(msg)
     en = next(x for x in r if x["name"] == "English")
     if en.get("level") != "Native":
-        raise AssertionError(f"Expected Native, got {en!r}")
+        msg = f"Expected Native, got {en!r}"
+        raise AssertionError(msg)

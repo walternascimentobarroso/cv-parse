@@ -15,24 +15,31 @@ def test_backward_compat_keys_and_types() -> None:
 
     for key in ("experience", "education", "skills", "certifications", "personal_info"):
         if not hasattr(result, key):
-            raise AssertionError(f"Missing attribute {key!r}")
+            msg = f"Missing attribute {key!r}"
+            raise AssertionError(msg)
 
     if not isinstance(result.experience, list):
-        raise AssertionError("experience must be list")
+        msg = "experience must be list"
+        raise AssertionError(msg)
     if not isinstance(result.skills, list):
-        raise AssertionError("skills must be list of strings")
+        msg = "skills must be list of strings"
+        raise AssertionError(msg)
     if not isinstance(result.certifications, list):
-        raise AssertionError("certifications must be list")
+        msg = "certifications must be list"
+        raise AssertionError(msg)
 
     for entry in result.experience:
         for k in ("company", "role", "start_date", "end_date", "description"):
             if k not in entry:
-                raise AssertionError(f"experience entry missing {k!r}")
+                msg = f"experience entry missing {k!r}"
+                raise AssertionError(msg)
 
     pi = result.personal_info
     for k in ("full_name", "email", "phone", "linkedin", "github", "summary"):
         if k not in pi:
-            raise AssertionError(f"personal_info missing {k!r}")
+            msg = f"personal_info missing {k!r}"
+            raise AssertionError(msg)
 
     if result.personal_info.get("email") != "alice@smith.dev":
-        raise AssertionError("Expected fixture email preserved")
+        msg = "Expected fixture email preserved"
+        raise AssertionError(msg)

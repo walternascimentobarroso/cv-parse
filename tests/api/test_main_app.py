@@ -12,7 +12,9 @@ def test_main_app_health_endpoint() -> None:
     with TestClient(app) as client:
         response = client.get("/health")
         if response.status_code != 200:
-            raise AssertionError(f"Expected status 200, got {response.status_code}")
+            msg = f"Expected status 200, got {response.status_code}"
+            raise AssertionError(msg)
         body = response.json()
         if body.get("status") != "ok":
-            raise AssertionError(f"Expected status 'ok', got {body.get('status')!r}")
+            msg = f"Expected status 'ok', got {body.get('status')!r}"
+            raise AssertionError(msg)

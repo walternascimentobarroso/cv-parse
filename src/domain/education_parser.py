@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _YEAR_RANGE_PATTERN = re.compile(r"\b(?P<start>\d{4})\s*[-–]\s*(?P<end>\d{4})\b")
 _MONTH_YEAR_RANGE_PATTERN = re.compile(
-    r"\b(?P<start_mon>\w{3})\s+(?P<start>\d{4})\s*[-–]\s*(?P<end_mon>\w{3})\s+(?P<end>\d{4})\b"
+    r"\b(?P<start_mon>\w{3})\s+(?P<start>\d{4})\s*[-–]\s*(?P<end_mon>\w{3})\s+(?P<end>\d{4})\b",
 )
 _YEAR_PATTERN = re.compile(r"\b(?P<year>\d{4})\b")
 

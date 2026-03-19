@@ -24,7 +24,7 @@ def extract_skills(text: str, *, skills_catalog: list[str] | None = None) -> lis
     catalog = skills_catalog or DEFAULT_SKILLS
     lowered_text = text.lower()
 
-    found: "OrderedDict[str, None]" = OrderedDict()
+    found: OrderedDict[str, None] = OrderedDict()
     for skill in catalog:
         token = skill.strip()
         if not token:

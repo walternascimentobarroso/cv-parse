@@ -21,7 +21,8 @@ class SimpleDocumentExtractor:
 
     def extract(self, content: bytes, content_type: str) -> str:
         if content_type not in self._allowed:
-            raise ValueError(f"Unsupported content type: {content_type}")
+            msg = f"Unsupported content type: {content_type}"
+            raise ValueError(msg)
 
         if not content:
             return ""
@@ -32,7 +33,8 @@ class SimpleDocumentExtractor:
         if content_type == self._mime_pdf:
             return self._extract_pdf(content)
 
-        raise ValueError(f"Unsupported content type: {content_type}")
+        msg = f"Unsupported content type: {content_type}"
+        raise ValueError(msg)
 
     def _extract_pdf(self, content: bytes) -> str:
         buffer = io.BytesIO(content)

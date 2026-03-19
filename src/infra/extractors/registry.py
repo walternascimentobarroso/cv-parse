@@ -24,5 +24,6 @@ class ExtractorRegistry:
     def extract(self, content: bytes, content_type: str) -> str:
         strategy = self._strategies.get(content_type)
         if strategy is None:
-            raise ValueError(f"Unsupported content type: {content_type}")
+            msg = f"Unsupported content type: {content_type}"
+            raise ValueError(msg)
         return strategy.extract(content)

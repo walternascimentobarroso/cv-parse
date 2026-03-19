@@ -17,14 +17,17 @@ def test_extract_includes_personal_info(client) -> None:  # type: ignore[no-unty
     }
     response = client.post("/extract", files=files)
     if response.status_code != 200:
-        raise AssertionError(f"Expected status 200, got {response.status_code}")
+        msg = f"Expected status 200, got {response.status_code}"
+        raise AssertionError(msg)
     body: dict[str, Any] = response.json()
     parsed = body.get("parsed_data") or {}
     personal_info = parsed.get("personal_info") or {}
     if personal_info.get("full_name") != "Ada Lovelace":
-        raise AssertionError(f"Expected full_name, got {personal_info.get('full_name')!r}")
+        msg = f"Expected full_name, got {personal_info.get('full_name')!r}"
+        raise AssertionError(msg)
     if personal_info.get("email") != "ada.lovelace@example.com":
-        raise AssertionError(f"Expected email, got {personal_info.get('email')!r}")
+        msg = f"Expected email, got {personal_info.get('email')!r}"
+        raise AssertionError(msg)
 
 
 def test_existing_parsed_data_fields_preserved(client) -> None:  # type: ignore[no-untyped-def]
@@ -46,9 +49,11 @@ def test_existing_parsed_data_fields_preserved(client) -> None:  # type: ignore[
     }
     response = client.post("/extract", files=files)
     if response.status_code != 200:
-        raise AssertionError(f"Expected status 200, got {response.status_code}")
+        msg = f"Expected status 200, got {response.status_code}"
+        raise AssertionError(msg)
     body: dict[str, Any] = response.json()
     parsed = body.get("parsed_data") or {}
     for key in ("experience", "education", "skills", "certifications"):
         if key not in parsed:
-            raise AssertionError(f"Expected {key} in parsed_data, got keys {list(parsed.keys())}")
+            msg = f"Expected {key} in parsed_data, got keys {list(parsed.keys())}"
+            raise AssertionError(msg)

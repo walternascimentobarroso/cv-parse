@@ -10,4 +10,5 @@ def test_certification_details_ignores_blank_and_parses_separator() -> None:
     result = certification_details_from_strings(certs)
     expected = [{"name": "Python Course", "issuer": "Coursera"}]
     if result != expected:
-        raise AssertionError(f"Expected {expected!r}, got {result!r}")
+        msg = f"Expected {expected!r}, got {result!r}"
+        raise AssertionError(msg)

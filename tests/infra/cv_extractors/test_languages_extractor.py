@@ -8,7 +8,8 @@ def test_extract_languages_skips_empty_and_bullet_only_lines() -> None:
     result = extract_languages(text)
     expected = [{"name": "English", "level": "Advanced"}]
     if result != expected:
-        raise AssertionError(f"Expected {expected!r}, got {result!r}")
+        msg = f"Expected {expected!r}, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_extract_languages_simple_names_and_deduplicate() -> None:
@@ -16,11 +17,14 @@ def test_extract_languages_simple_names_and_deduplicate() -> None:
     result = extract_languages(text)
     names = [r["name"] for r in result]
     if "English" not in names:
-        raise AssertionError(f"Expected 'English' in names, got {names!r}")
+        msg = f"Expected 'English' in names, got {names!r}"
+        raise AssertionError(msg)
     if "Portuguese" not in names:
-        raise AssertionError(f"Expected 'Portuguese' in names, got {names!r}")
+        msg = f"Expected 'Portuguese' in names, got {names!r}"
+        raise AssertionError(msg)
     if len(names) != 2:
-        raise AssertionError(f"Expected 2 names (deduped), got {len(names)}")
+        msg = f"Expected 2 names (deduped), got {len(names)}"
+        raise AssertionError(msg)
 
 
 def test_extract_languages_early_empty_line_is_skipped() -> None:
@@ -28,4 +32,5 @@ def test_extract_languages_early_empty_line_is_skipped() -> None:
     result = extract_languages(text)
     expected = [{"name": "English", "level": None}]
     if result != expected:
-        raise AssertionError(f"Expected {expected!r}, got {result!r}")
+        msg = f"Expected {expected!r}, got {result!r}"
+        raise AssertionError(msg)

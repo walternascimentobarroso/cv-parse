@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
-from typing import AsyncIterator, Iterator
+from typing import TYPE_CHECKING
 
 import pytest
 from fastapi import FastAPI
@@ -18,6 +18,9 @@ from fastapi.testclient import TestClient
 
 from src.api.routes import router as api_router
 from src.infra.extractors.registry import ExtractorRegistry
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator, Iterator
 
 
 def _make_oid(i: int) -> str:

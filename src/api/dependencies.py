@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import Request
+from typing import TYPE_CHECKING
 
-from src.domain.document_extractor_contracts import DocumentExtractor
-from src.infra.storage import ExtractionRepository
+if TYPE_CHECKING:
+    from fastapi import Request
+
+    from src.domain.document_extractor_contracts import DocumentExtractor
+    from src.infra.storage import ExtractionRepository
 
 
 def get_repo(request: Request) -> ExtractionRepository:

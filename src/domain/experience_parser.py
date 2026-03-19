@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Iterable
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 _DATE_RANGE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(?P<start>\b\w{3}\s+\d{4})\s*[-–]\s*(?P<end>\b\w{3}\s+\d{4}|\b[Pp]resent\b)"),

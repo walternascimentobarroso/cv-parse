@@ -1,17 +1,20 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable
+from typing import TYPE_CHECKING
 from urllib.parse import urlparse
 
 from src.domain.personal_info.entities.personal_info import PersonalInfo
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 HEADER_MAX_LINES = 10
 
 EMAIL_REGEX = re.compile(
     r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@"
     r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?"
-    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+"
+    r"(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?)+",
 )
 
 URL_REGEX = re.compile(
@@ -175,12 +178,7 @@ def _starts_with_section_heading(text: str) -> bool:
     heading only when the paragraph starts with one of the known section labels.
     """
     lowered = text.strip().lower()
-    return (
-        lowered.startswith("experience")
-        or lowered.startswith("education")
-        or lowered.startswith("skills")
-        or lowered.startswith("certifications")
-    )
+    return lowered.startswith(("experience", "education", "skills", "certifications"))
 
 
 def extract_name(lines: list[str]) -> str | None:
@@ -223,7 +221,7 @@ _SUMMARY_STOP = frozenset(
         "languages",
         "projects",
         "employment",
-    }
+    },
 )
 
 

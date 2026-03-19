@@ -16,10 +16,12 @@ More work.
 """
     r = parse_experience_multi(text)
     if len(r) != 2:
-        raise AssertionError(f"Expected 2 entries, got {len(r)}")
+        msg = f"Expected 2 entries, got {len(r)}"
+        raise AssertionError(msg)
     joined = " ".join(str(e.get("company", "")) for e in r).lower()
     if "acme" not in joined or "beta" not in joined:
-        raise AssertionError(f"Expected Acme and Beta, got {r!r}")
+        msg = f"Expected Acme and Beta, got {r!r}"
+        raise AssertionError(msg)
 
 
 def test_star_content_in_description() -> None:
@@ -32,8 +34,10 @@ Result: 2x faster.
 """
     r = parse_experience_multi(text)
     if not r:
-        raise AssertionError("Expected one entry")
+        msg = "Expected one entry"
+        raise AssertionError(msg)
     desc = str(r[0].get("description", ""))
     for frag in ("Slow app", "Speed up", "Cached", "2x faster"):
         if frag not in desc:
-            raise AssertionError(f"Missing {frag!r} in {desc!r}")
+            msg = f"Missing {frag!r} in {desc!r}"
+            raise AssertionError(msg)

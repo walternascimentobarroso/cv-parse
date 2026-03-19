@@ -61,7 +61,6 @@ def main() -> None:
     for line in PROFILE_CV.split("\n"):
         pdf.multi_cell(usable_w, 5, line, new_x="LMARGIN", new_y="NEXT")
     pdf.output(str(pdf_path))
-    print(f"Wrote {pdf_path}")
 
 
 if __name__ == "__main__":

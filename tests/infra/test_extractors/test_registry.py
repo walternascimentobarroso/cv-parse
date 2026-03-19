@@ -2,29 +2,36 @@
 
 from __future__ import annotations
 
-import pytest
+from typing import TYPE_CHECKING, Never, Self
 
-from src.infra.extractors.base import DocumentExtractorStrategy
 from src.infra.extractors.pdf import PdfExtractor
 from src.infra.extractors.plain_text import PlainTextExtractor
 from src.infra.extractors.registry import ExtractorRegistry
+
+if TYPE_CHECKING:
+    import pytest
+
+    from src.infra.extractors.base import DocumentExtractorStrategy
 
 
 def test_registry_plain_text() -> None:
     registry = ExtractorRegistry(mime_type_plain="text/plain", mime_type_pdf="application/pdf")
     result = registry.extract(b"hello world", "text/plain")
     if result != "hello world":
-        raise AssertionError(f"Expected 'hello world', got {result!r}")
+        msg = f"Expected 'hello world', got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_registry_unsupported_type_raises() -> None:
     registry = ExtractorRegistry(mime_type_plain="text/plain", mime_type_pdf="application/pdf")
     try:
         registry.extract(b"x", "image/jpeg")
-        raise AssertionError("Expected ValueError for unsupported type")
+        msg = "Expected ValueError for unsupported type"
+        raise AssertionError(msg)
     except ValueError as e:
         if "Unsupported" not in str(e):
-            raise AssertionError(f"Expected 'Unsupported' in error: {e}") from e
+            msg = f"Expected 'Unsupported' in error: {e}"
+            raise AssertionError(msg) from e
 
 
 def test_registry_pdf_invalid_raises_value_error() -> None:
@@ -32,20 +39,24 @@ def test_registry_pdf_invalid_raises_value_error() -> None:
     registry = ExtractorRegistry(mime_type_plain="text/plain", mime_type_pdf="application/pdf")
     try:
         registry.extract(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n", "application/pdf")
-        raise AssertionError("Expected ValueError for invalid PDF")
+        msg = "Expected ValueError for invalid PDF"
+        raise AssertionError(msg)
     except ValueError as exc:
         if "PDF extraction failed" not in str(exc):
-            raise AssertionError(f"Expected 'PDF extraction failed' in error: {exc}") from exc
+            msg = f"Expected 'PDF extraction failed' in error: {exc}"
+            raise AssertionError(msg) from exc
 
 
 def test_plain_text_extractor_empty_and_non_empty() -> None:
     extractor: DocumentExtractorStrategy = PlainTextExtractor()
     empty_result = extractor.extract(b"")
     if empty_result != "":
-        raise AssertionError(f"Expected empty string for empty content, got {empty_result!r}")
+        msg = f"Expected empty string for empty content, got {empty_result!r}"
+        raise AssertionError(msg)
     result = extractor.extract(b"hello")
     if result != "hello":
-        raise AssertionError(f"Expected 'hello', got {result!r}")
+        msg = f"Expected 'hello', got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_pdf_extractor_happy_path_and_empty(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -62,7 +73,7 @@ def test_pdf_extractor_happy_path_and_empty(monkeypatch: pytest.MonkeyPatch) -> 
         def __init__(self) -> None:
             self.pages = [FakePage("p1"), FakePage("p2")]
 
-        def __enter__(self) -> "FakePdf":
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:  # type: ignore[override]
@@ -74,11 +85,13 @@ def test_pdf_extractor_happy_path_and_empty(monkeypatch: pytest.MonkeyPatch) -> 
 
     empty_result = extractor.extract(b"")
     if empty_result != "":
-        raise AssertionError(f"Expected empty string for empty content, got {empty_result!r}")
+        msg = f"Expected empty string for empty content, got {empty_result!r}"
+        raise AssertionError(msg)
 
     result = extractor.extract(b"%PDF-1.4")
     if result != "p1\np2":
-        raise AssertionError(f"Expected joined page text, got {result!r}")
+        msg = f"Expected joined page text, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_pdf_extractor_logs_and_raises_on_failure(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -86,14 +99,17 @@ def test_pdf_extractor_logs_and_raises_on_failure(monkeypatch: pytest.MonkeyPatc
 
     import src.infra.extractors.pdf as pdf_module
 
-    def boom(_buffer):
-        raise RuntimeError("pdf boom")
+    def boom(_buffer) -> Never:
+        msg = "pdf boom"
+        raise RuntimeError(msg)
 
     monkeypatch.setattr(pdf_module.pdfplumber, "open", boom)
 
     try:
         extractor.extract(b"%PDF-1.4")
-        raise AssertionError("Expected ValueError from PdfExtractor on failure")
+        msg = "Expected ValueError from PdfExtractor on failure"
+        raise AssertionError(msg)
     except ValueError as exc:
         if "PDF extraction failed" not in str(exc):
-            raise AssertionError(f"Unexpected error message: {exc!r}") from exc
+            msg = f"Unexpected error message: {exc!r}"
+            raise AssertionError(msg) from exc

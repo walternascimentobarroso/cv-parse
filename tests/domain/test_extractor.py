@@ -1,5 +1,7 @@
 """Unit tests for document extractor (domain layer). No server or external systems."""
 
+from typing import Self
+
 import pytest
 
 from src.domain.extractor import SimpleDocumentExtractor
@@ -7,10 +9,11 @@ from src.domain.extractor import SimpleDocumentExtractor
 
 def test_plain_text_extraction() -> None:
     extractor = SimpleDocumentExtractor(["text/plain"])
-    content = "hello world".encode("utf-8")
+    content = b"hello world"
     result = extractor.extract(content, "text/plain")
     if result != "hello world":
-        raise AssertionError(f"Expected 'hello world', got {result!r}")
+        msg = f"Expected 'hello world', got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_pdf_extraction_uses_pdf_handler(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -27,18 +30,21 @@ def test_pdf_extraction_uses_pdf_handler(monkeypatch: pytest.MonkeyPatch) -> Non
 
     result = extractor.extract(b"%PDF-1.4", "application/pdf")
     if result != "pdf text":
-        raise AssertionError(f"Expected 'pdf text', got {result!r}")
+        msg = f"Expected 'pdf text', got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_extract_unsupported_type_raises() -> None:
     extractor = SimpleDocumentExtractor(["text/plain"])
     try:
         extractor.extract(b"hello", "application/pdf")
-        raise AssertionError("Expected ValueError for unsupported content type")
+        msg = "Expected ValueError for unsupported content type"
+        raise AssertionError(msg)
     except ValueError as exc:
         message = str(exc)
         if "Unsupported content type" not in message:
-            raise AssertionError(f"Unexpected error message: {message!r}") from exc
+            msg = f"Unexpected error message: {message!r}"
+            raise AssertionError(msg) from exc
 
 
 def test_extract_with_allowed_but_unhandled_type_raises() -> None:
@@ -46,18 +52,21 @@ def test_extract_with_allowed_but_unhandled_type_raises() -> None:
     extractor = SimpleDocumentExtractor(["application/octet-stream"])
     try:
         extractor.extract(b"data", "application/octet-stream")
-        raise AssertionError("Expected ValueError for unhandled but allowed content type")
+        msg = "Expected ValueError for unhandled but allowed content type"
+        raise AssertionError(msg)
     except ValueError as exc:
         message = str(exc)
         if "Unsupported content type" not in message:
-            raise AssertionError(f"Unexpected error message: {message!r}") from exc
+            msg = f"Unexpected error message: {message!r}"
+            raise AssertionError(msg) from exc
 
 
 def test_extract_empty_content_returns_empty() -> None:
     extractor = SimpleDocumentExtractor(["text/plain"])
     result = extractor.extract(b"", "text/plain")
     if result != "":
-        raise AssertionError(f"Expected empty string for empty content, got {result!r}")
+        msg = f"Expected empty string for empty content, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_extract_pdf_reads_pages(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -74,7 +83,7 @@ def test_extract_pdf_reads_pages(monkeypatch: pytest.MonkeyPatch) -> None:
         def __init__(self) -> None:
             self.pages = [FakePage("page1"), FakePage("page2")]
 
-        def __enter__(self) -> "FakePdf":
+        def __enter__(self) -> Self:
             return self
 
         def __exit__(self, exc_type, exc, tb) -> None:  # type: ignore[override]
@@ -87,4 +96,5 @@ def test_extract_pdf_reads_pages(monkeypatch: pytest.MonkeyPatch) -> None:
     extractor = SimpleDocumentExtractor(["application/pdf"])
     result = extractor.extract(b"%PDF-1.4", "application/pdf")
     if result != "page1\npage2":
-        raise AssertionError(f"Expected joined page text, got {result!r}")
+        msg = f"Expected joined page text, got {result!r}"
+        raise AssertionError(msg)

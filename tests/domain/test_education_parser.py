@@ -9,54 +9,66 @@ from src.domain.education_parser import (
 def test_parse_education_empty_returns_empty() -> None:
     result = parse_education_section("")
     if result != []:
-        raise AssertionError(f"Expected [], got {result!r}")
+        msg = f"Expected [], got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_whitespace_only_returns_empty() -> None:
     result = parse_education_section("   \n  ")
     if result != []:
-        raise AssertionError(f"Expected [], got {result!r}")
+        msg = f"Expected [], got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_single_block_with_year_range() -> None:
     text = "University of London, BSc Computer Science 2018 - 2022"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     entry = result[0]
     if entry.get("start_year") != "2018" or entry.get("end_year") != "2022":
-        raise AssertionError(f"Expected year range 2018-2022, got {entry!r}")
+        msg = f"Expected year range 2018-2022, got {entry!r}"
+        raise AssertionError(msg)
     if "London" not in (entry.get("institution") or ""):
-        raise AssertionError(f"Expected institution with London, got {entry!r}")
+        msg = f"Expected institution with London, got {entry!r}"
+        raise AssertionError(msg)
     if not entry.get("degree"):
-        raise AssertionError(f"Expected degree, got {entry!r}")
+        msg = f"Expected degree, got {entry!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_single_year() -> None:
     text = "MIT, PhD 2020"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("end_year") != "2020":
-        raise AssertionError(f"Expected end_year 2020, got {result[0]!r}")
+        msg = f"Expected end_year 2020, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_multiple_blocks() -> None:
     text = "University A, BSc 2015-2019\n\nCollege B, MSc 2019-2021"
     result = parse_education_section(text)
     if len(result) != 2:
-        raise AssertionError(f"Expected 2 entries, got {len(result)}")
+        msg = f"Expected 2 entries, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("end_year") != "2019" or result[1].get("end_year") != "2021":
-        raise AssertionError(f"Expected two blocks with years, got {result!r}")
+        msg = f"Expected two blocks with years, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_no_years() -> None:
     text = "Some School, Diploma"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("start_year") != "" or result[0].get("end_year") != "":
-        raise AssertionError(f"Expected empty years, got {result[0]!r}")
+        msg = f"Expected empty years, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_two_years_without_hyphen() -> None:
@@ -64,9 +76,11 @@ def test_parse_education_two_years_without_hyphen() -> None:
     text = "University of X, BSc 2015 2019"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("start_year") != "2015" or result[0].get("end_year") != "2019":
-        raise AssertionError(f"Expected start 2015 end 2019, got {result[0]!r}")
+        msg = f"Expected start 2015 end 2019, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_institution_fallback_first_token() -> None:
@@ -74,18 +88,22 @@ def test_parse_education_institution_fallback_first_token() -> None:
     text = "Some School, 2020"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("institution") != "Some School":
-        raise AssertionError(f"Expected first token as institution fallback, got {result[0]!r}")
+        msg = f"Expected first token as institution fallback, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_degree_keywords() -> None:
     text = "State University, Master in CS 2018-2020"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if not result[0].get("degree"):
-        raise AssertionError(f"Expected degree parsed, got {result[0]!r}")
+        msg = f"Expected degree parsed, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_output_dict_shape() -> None:
@@ -94,17 +112,21 @@ def test_parse_education_output_dict_shape() -> None:
     entry = result[0]
     for key in ("institution", "degree", "start_year", "end_year"):
         if key not in entry:
-            raise AssertionError(f"Expected key {key!r} in entry")
+            msg = f"Expected key {key!r} in entry"
+            raise AssertionError(msg)
     if not all(isinstance(v, str) for v in entry.values()):
-        raise AssertionError(f"All values must be str, got {entry!r}")
+        msg = f"All values must be str, got {entry!r}"
+        raise AssertionError(msg)
 
 
 def test_education_entry_dataclass_defaults() -> None:
     entry = EducationEntry()
     if entry.institution is not None or entry.degree is not None:
-        raise AssertionError(f"Expected None defaults, got {entry!r}")
+        msg = f"Expected None defaults, got {entry!r}"
+        raise AssertionError(msg)
     if entry.start_year is not None or entry.end_year is not None:
-        raise AssertionError(f"Expected None year defaults, got {entry!r}")
+        msg = f"Expected None year defaults, got {entry!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_two_blocks_separated_by_header_line() -> None:
@@ -112,9 +134,11 @@ def test_parse_education_two_blocks_separated_by_header_line() -> None:
     text = "University A, BSc 2015-2019\nCollege B, MSc 2019-2021"
     result = parse_education_section(text)
     if len(result) != 2:
-        raise AssertionError(f"Expected 2 entries, got {len(result)}")
+        msg = f"Expected 2 entries, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("end_year") != "2019" or result[1].get("end_year") != "2021":
-        raise AssertionError(f"Expected two blocks with years, got {result!r}")
+        msg = f"Expected two blocks with years, got {result!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_month_year_range() -> None:
@@ -122,9 +146,11 @@ def test_parse_education_month_year_range() -> None:
     text = "State University, Master Jan 2018 - Dec 2022"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("start_year") != "2018" or result[0].get("end_year") != "2022":
-        raise AssertionError(f"Expected 2018-2022 from month-year range, got {result[0]!r}")
+        msg = f"Expected 2018-2022 from month-year range, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_header_only_years_no_text() -> None:
@@ -132,9 +158,11 @@ def test_parse_education_header_only_years_no_text() -> None:
     text = "2018 - 2022"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     if result[0].get("start_year") != "2018" or result[0].get("end_year") != "2022":
-        raise AssertionError(f"Expected years 2018-2022, got {result[0]!r}")
+        msg = f"Expected years 2018-2022, got {result[0]!r}"
+        raise AssertionError(msg)
 
 
 def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
@@ -142,14 +170,17 @@ def test_parse_education_degree_with_institution_word_and_rest_lines() -> None:
     text = "Master University 2018 - 2022\nFaculty of Engineering"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     entry = result[0]
     if entry.get("degree") != "Master":
-        raise AssertionError(f"Expected degree 'Master', got {entry.get('degree')!r}")
+        msg = f"Expected degree 'Master', got {entry.get('degree')!r}"
+        raise AssertionError(msg)
     if "University" not in (entry.get("institution") or ""):
         inst = entry.get("institution")
+        msg = f"Expected institution to contain University and rest, got {inst!r}"
         raise AssertionError(
-            f"Expected institution to contain University and rest, got {inst!r}",
+            msg,
         )
 
 
@@ -158,14 +189,17 @@ def test_parse_education_no_degree_or_institution_in_header_uses_first_token() -
     text = "Institute of Tech 2018 - 2022\nSome Faculty"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     entry = result[0]
     if entry.get("degree") not in (None, ""):
-        raise AssertionError(f"Expected empty degree, got {entry.get('degree')!r}")
+        msg = f"Expected empty degree, got {entry.get('degree')!r}"
+        raise AssertionError(msg)
     if "Some Faculty" not in (entry.get("institution") or ""):
         inst = entry.get("institution")
+        msg = f"Expected rest lines in institution, got {inst!r}"
         raise AssertionError(
-            f"Expected rest lines in institution, got {inst!r}",
+            msg,
         )
 
 
@@ -174,7 +208,9 @@ def test_parse_education_degree_without_institution_word_not_split() -> None:
     text = "BSc Computer Science 2018-2022\nSome University"
     result = parse_education_section(text)
     if len(result) != 1:
-        raise AssertionError(f"Expected 1 entry, got {len(result)}")
+        msg = f"Expected 1 entry, got {len(result)}"
+        raise AssertionError(msg)
     entry = result[0]
     if "BSc" not in (entry.get("degree") or ""):
-        raise AssertionError(f"Expected degree to contain 'BSc', got {entry.get('degree')!r}")
+        msg = f"Expected degree to contain 'BSc', got {entry.get('degree')!r}"
+        raise AssertionError(msg)

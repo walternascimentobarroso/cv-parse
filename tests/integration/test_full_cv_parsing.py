@@ -65,7 +65,7 @@ def test_profile_pdf_matches_expected_criteria() -> None:
     raw = PdfExtractor().extract(PROFILE_PDF.read_bytes())
     data = parse_cv(raw)
     loaded = json.loads(EXPECTED_JSON.read_text())
-    exp = cast(ProfileExpectations, loaded)
+    exp = cast("ProfileExpectations", loaded)
     _assert_experience(data.experience, exp)
     _assert_personal(data.personal_info, exp)
     _assert_skills_langs_certs(data, exp)

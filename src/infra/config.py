@@ -59,7 +59,8 @@ class Settings(BaseSettings):
     def _require_non_empty(cls, v: str) -> str:
         s = (v or "").strip()
         if not s:
-            raise ValueError("MongoDB settings must be provided via environment variables.")
+            msg = "MongoDB settings must be provided via environment variables."
+            raise ValueError(msg)
         return s
 
 

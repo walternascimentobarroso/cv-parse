@@ -9,6 +9,8 @@ Leadership
 """
     hard, soft = extract_hard_and_soft_skills(text)
     if "Python" not in hard or "Docker" not in hard:
-        raise AssertionError(f"Expected hard skills, got {hard!r}")
+        msg = f"Expected hard skills, got {hard!r}"
+        raise AssertionError(msg)
     if "Leadership" not in soft:
-        raise AssertionError(f"Expected soft skills, got {soft!r}")
+        msg = f"Expected soft skills, got {soft!r}"
+        raise AssertionError(msg)
