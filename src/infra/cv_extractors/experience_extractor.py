@@ -49,10 +49,7 @@ def _line_has_compact_date_range(line: str) -> bool:
     stripped = line.strip()
     if len(stripped) > 80:
         return False
-    for pattern in _DATE_RANGE_PATTERNS:
-        if pattern.search(stripped):
-            return True
-    return False
+    return any(pattern.search(stripped) for pattern in _DATE_RANGE_PATTERNS)
 
 
 def _merge_role_line_with_following_dates(text: str) -> str:
@@ -114,14 +111,11 @@ def _merge_star_description(description: str) -> tuple[str, list[str], list[str]
             else:
                 other.append(line.strip())
 
-    ordered: list[str] = []
-    for part in (situation, task, action, result):
-        if part:
-            ordered.append("\n".join(part))
-    body = "\n\n".join(ordered) if ordered else description
-    if other and other != situation + task + action + result:
-        extra = "\n".join(other)
-        body = f"{body}\n\n{extra}".strip() if body else extra
+    ordered = ["\n".join(part) for part in (situation, task, action, result) if part]
+    star_block = "\n\n".join(ordered) if ordered else description
+    other_block = "\n".join(other)
+    parts = [p for p in (star_block, other_block) if p]
+    body = "\n\n".join(parts)
 
     responsibilities = [x for x in task + action if x]
     achievements = list(result)

@@ -33,9 +33,9 @@ def test_registry_pdf_invalid_raises_value_error() -> None:
     try:
         registry.extract(b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n", "application/pdf")
         raise AssertionError("Expected ValueError for invalid PDF")
-    except ValueError as e:
-        if "PDF extraction failed" not in str(e):
-            raise AssertionError(f"Expected 'PDF extraction failed' in error: {e}") from e
+    except ValueError as exc:
+        if "PDF extraction failed" not in str(exc):
+            raise AssertionError(f"Expected 'PDF extraction failed' in error: {exc}") from exc
 
 
 def test_plain_text_extractor_empty_and_non_empty() -> None:
@@ -96,4 +96,4 @@ def test_pdf_extractor_logs_and_raises_on_failure(monkeypatch: pytest.MonkeyPatc
         raise AssertionError("Expected ValueError from PdfExtractor on failure")
     except ValueError as exc:
         if "PDF extraction failed" not in str(exc):
-            raise AssertionError(f"Unexpected error message: {exc!r}")
+            raise AssertionError(f"Unexpected error message: {exc!r}") from exc

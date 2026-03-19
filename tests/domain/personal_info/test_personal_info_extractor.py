@@ -148,6 +148,17 @@ def test_classify_url_linkedin_github_and_other() -> None:
         raise AssertionError(f"Expected both None, got {li3!r} {gh3!r}")
 
 
+def test_normalize_url_empty_string_returns_none() -> None:
+    if pie._normalize_url("") is not None:
+        raise AssertionError("Expected None for empty string URL input")
+
+
+def test_normalize_url_http_upgraded_to_https() -> None:
+    out = pie._normalize_url("http://example.com/path")
+    if out != "https://example.com/path":
+        raise AssertionError(f"Expected https upgrade, got {out!r}")
+
+
 def test_choose_linkedin_skips_unnormalizable_then_picks() -> None:
     out = pie._choose_linkedin(["https://", "https://www.linkedin.com/in/ada"])
     if out is None or "linkedin.com" not in out:
@@ -163,6 +174,15 @@ def test_choose_github_skips_unnormalizable_then_picks() -> None:
 def test_choose_github_no_github_url_returns_none() -> None:
     if pie._choose_github(["https://example.com"]) is not None:
         raise AssertionError("Expected None when no github URL")
+
+
+def test_extract_personal_website_skips_unnormalizable_and_known_hosts() -> None:
+    urls = ["https://", "linkedin.com/in/ada", "github.com/ada", "ada.example.com"]
+    email = "user@example.com"
+    out = pie.extract_personal_website(urls, email)
+    # Domain matches email domain, so it should be filtered out and return None.
+    if out is not None:
+        raise AssertionError(f"Expected None personal website, got {out!r}")
 
 
 def test_extract_links_only_linkedin_github_none() -> None:
@@ -217,6 +237,33 @@ def test_extract_summary_second_paragraph_starts_education_skills_certifications
         text = f"Name\n\n{heading}\n{body}"
         if extract_summary(text) is not None:
             raise AssertionError(f"Expected None for heading {heading!r}")
+
+
+def test_extract_summary_from_labeled_uses_blank_line_to_terminate() -> None:
+    lines = [
+        "Summary",
+        "First line of summary",
+        "",
+        "Experience",
+        "Engineer at X",
+    ]
+    text = "\n".join(lines)
+    result = extract_summary(text)
+    if result != "First line of summary":
+        raise AssertionError(f"Expected labeled summary until blank, got {result!r}")
+
+
+def test_extract_summary_from_labeled_no_content_returns_none() -> None:
+    lines = [
+        "Summary",
+        "",
+        "Experience",
+        "Engineer at X",
+    ]
+    text = "\n".join(lines)
+    result = extract_summary(text)
+    if result is not None:
+        raise AssertionError(f"Expected None when no labeled summary body, got {result!r}")
 
 
 def test_extract_personal_info_missing_email_and_summary() -> None:

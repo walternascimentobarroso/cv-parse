@@ -1,5 +1,4 @@
-"""
-Shared test configuration and fixtures.
+"""Shared test configuration and fixtures.
 
 - TestClient uses a test app with a minimal lifespan (no real DB).
 - get_repo and get_extractor are satisfied via app.state set in test lifespan.

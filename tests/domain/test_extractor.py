@@ -38,7 +38,7 @@ def test_extract_unsupported_type_raises() -> None:
     except ValueError as exc:
         message = str(exc)
         if "Unsupported content type" not in message:
-            raise AssertionError(f"Unexpected error message: {message!r}")
+            raise AssertionError(f"Unexpected error message: {message!r}") from exc
 
 
 def test_extract_with_allowed_but_unhandled_type_raises() -> None:
@@ -50,7 +50,7 @@ def test_extract_with_allowed_but_unhandled_type_raises() -> None:
     except ValueError as exc:
         message = str(exc)
         if "Unsupported content type" not in message:
-            raise AssertionError(f"Unexpected error message: {message!r}")
+            raise AssertionError(f"Unexpected error message: {message!r}") from exc
 
 
 def test_extract_empty_content_returns_empty() -> None:

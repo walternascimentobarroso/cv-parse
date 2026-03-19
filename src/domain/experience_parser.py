@@ -85,9 +85,7 @@ def _line_looks_like_experience_header(line: str) -> bool:
     if not _line_has_date_range(line):
         return False
     header_part = _strip_date_segment(line).strip()
-    if len(header_part) < 2:
-        return False
-    return True
+    return not len(header_part) < 2
 
 
 def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:

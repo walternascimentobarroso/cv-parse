@@ -74,9 +74,7 @@ def _strip_year_segment(text: str) -> str:
 def _line_has_year_range(line: str) -> bool:
     if _YEAR_RANGE_PATTERN.search(line):
         return True
-    if _MONTH_YEAR_RANGE_PATTERN.search(line):
-        return True
-    return False
+    return bool(_MONTH_YEAR_RANGE_PATTERN.search(line))
 
 
 def _line_looks_like_education_header(line: str) -> bool:

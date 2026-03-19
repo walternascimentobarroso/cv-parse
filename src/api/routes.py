@@ -117,7 +117,7 @@ async def extract_text(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to process document.",
-        )
+        ) from exc
 
     return ExtractResponse(
         text=extracted_text,

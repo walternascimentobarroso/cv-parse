@@ -17,9 +17,12 @@ EMAIL_REGEX = re.compile(
 URL_REGEX = re.compile(
     # Match both full URLs (with scheme) and bare domains/paths like "github.com/ada".
     # We rely on `_normalize_url()` to prepend https:// when the scheme is missing.
-    r"((?:https?://)?[A-Za-z0-9.-]+\.[A-Za-z]{2,}(?:/[^\s]*)?)",
+    r"((?:https?://)?[a-z0-9.-]+\.[a-z]{2,}(?:/[^\s]*)?)",
     flags=re.IGNORECASE,
 )
+
+_LINKEDIN_HOST = "linkedin.com"
+_GITHUB_HOST = "github.com"
 
 PHONE_REGEX = re.compile(
     r"(\+?\d[\d\s().-]{6,}\d)",
@@ -68,8 +71,7 @@ def _iter_urls(text: str) -> Iterable[str]:
 
 
 def _normalize_url(url: str) -> str | None:
-    """
-    Normalize URL for storage/display. Missing scheme defaults to https.
+    """Normalize URL for storage/display. Missing scheme defaults to https.
     Non-https schemes are upgraded to https (LinkedIn/GitHub support it; avoids clear-text URLs).
     """
     candidate = url.strip()
@@ -90,9 +92,9 @@ def _normalize_url(url: str) -> str | None:
 
 def _classify_url(normalized: str) -> tuple[str | None, str | None]:
     host = urlparse(normalized).netloc
-    if "linkedin.com" in host:
+    if _LINKEDIN_HOST in host:
         return normalized, None
-    if host.endswith("github.com"):
+    if host.endswith(_GITHUB_HOST):
         return None, normalized
     return None, None
 
@@ -103,7 +105,7 @@ def _choose_linkedin(urls: Iterable[str]) -> str | None:
         if normalized is None:
             continue
         host = urlparse(normalized).netloc
-        if "linkedin.com" in host:
+        if _LINKEDIN_HOST in host:
             return normalized
     return None
 
@@ -114,7 +116,7 @@ def _choose_github(urls: Iterable[str]) -> str | None:
         if normalized is None:
             continue
         host = urlparse(normalized).netloc
-        if host.endswith("github.com"):
+        if host.endswith(_GITHUB_HOST):
             return normalized
     return None
 
@@ -135,7 +137,7 @@ def extract_personal_website(urls: Iterable[str], email: str | None) -> str | No
         if normalized is None:
             continue
         host = urlparse(normalized).netloc.lower()
-        if "linkedin.com" in host or host.endswith("github.com"):
+        if _LINKEDIN_HOST in host or host.endswith(_GITHUB_HOST):
             continue
         if mail_domain and (host == mail_domain or host.endswith(f".{mail_domain}")):
             continue
@@ -165,14 +167,11 @@ def _looks_like_heading(text: str) -> bool:
         return True
     if "education" in lowered:
         return True
-    if "skills" in lowered:
-        return True
-    return False
+    return "skills" in lowered
 
 
 def _starts_with_section_heading(text: str) -> bool:
-    """
-    Summary text may contain words like "experience" mid-sentence; treat as a section
+    """Summary text may contain words like "experience" mid-sentence; treat as a section
     heading only when the paragraph starts with one of the known section labels.
     """
     lowered = text.strip().lower()
@@ -228,10 +227,7 @@ _SUMMARY_STOP = frozenset(
 )
 
 
-def extract_summary(text: str) -> str | None:
-    if not text:
-        return None
-    lines = text.splitlines()
+def _extract_summary_from_labeled(lines: list[str]) -> str | None:
     for i, line in enumerate(lines):
         if line.strip().lower() not in _SUMMARY_LABELS:
             continue
@@ -243,13 +239,17 @@ def extract_summary(text: str) -> str | None:
                     return " ".join(acc)
                 continue
             low = s.lower()
-            first_word = low.split()[0] if low.split() else ""
+            words = low.split()
+            first_word = words[0] if words else ""
             if low in _SUMMARY_STOP or first_word in _SUMMARY_STOP:
                 break
             acc.append(s)
         if acc:
             return " ".join(acc)
+    return None
 
+
+def _extract_summary_from_paragraphs(lines: list[str]) -> str | None:
     paragraphs = _paragraphs(lines)
     if len(paragraphs) < 2:
         return None
@@ -257,6 +257,18 @@ def extract_summary(text: str) -> str | None:
     if _starts_with_section_heading(candidate):
         return None
     return candidate
+
+
+def extract_summary(text: str) -> str | None:
+    if not text:
+        return None
+    lines = text.splitlines()
+
+    labeled = _extract_summary_from_labeled(lines)
+    if labeled:
+        return labeled
+
+    return _extract_summary_from_paragraphs(lines)
 
 
 def extract_personal_info(raw_text: str) -> dict[str, str | None]:

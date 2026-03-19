@@ -28,6 +28,17 @@ relative_files = true
 testpaths = ["tests"]
 pythonpath = ["."]
 
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "C", "W", "B", "PERF", "RET", "S", "FAST", "SIM"]
+ignore = ["D"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 12
+
 [dependency-groups]
 dev = [
     "fpdf2>=2.8.7",

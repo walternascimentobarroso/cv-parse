@@ -58,8 +58,7 @@ async def validate_upload(
     file: UploadFile | None,
     settings: UploadValidationSettings,
 ) -> ValidationResult:
-    """
-    Validate upload: presence, content type, size (via chunked read).
+    """Validate upload: presence, content type, size (via chunked read).
     Returns ValidationOk with content/metadata, or ValidationError.
     """
     if file is None:
