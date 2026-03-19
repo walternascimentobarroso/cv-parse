@@ -4,7 +4,10 @@ from __future__ import annotations
 
 import re
 
-from src.domain.experience_parser import parse_experience_section
+from src.domain.experience_parser import (
+    _line_looks_like_experience_header,
+    parse_experience_section,
+)
 from src.infra.logging_config import get_logger
 
 _log = get_logger(__name__)
@@ -68,6 +71,7 @@ def _merge_role_line_with_following_dates(text: str) -> str:
             and _line_has_compact_date_range(nxt)
             and not nxt.startswith(("-", "*", "•", "●"))
             and len(nxt) < 50
+            and not _line_looks_like_experience_header(nxt)
         ):
             out.append(f"{cur_stripped} {nxt}")
             i += 2

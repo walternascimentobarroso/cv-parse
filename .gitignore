@@ -27,4 +27,4 @@ htmlcov/
 .github/instructions/codacy.instructions.md
 
 # Local-only PDFs (golden CV is tests/fixtures/profile.pdf — tracked)
-tests/fixtures/private_*.pdf
+tests/fixtures/*.pdf

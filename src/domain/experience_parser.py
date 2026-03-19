@@ -9,8 +9,16 @@ if TYPE_CHECKING:
 
 _DATE_RANGE_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"(?P<start>\b\w{3}\s+\d{4})\s*[-–]\s*(?P<end>\b\w{3}\s+\d{4}|\b[Pp]resent\b)"),
+    re.compile(r"(?P<start>\b\w{3,9}\s+\d{4})\s*[-–]\s*(?P<end>\b\w{3,9}\s+\d{4}|\b[Pp]resent\b)"),
     re.compile(r"(?P<start>\b\d{4})\s*[-–]\s*(?P<end>\b\d{4}|\b[Pp]resent\b)"),
 ]
+
+# Line that is only a date range (month, YYYY - YYYY/Present, optional "(N years M months)")
+_DATE_ONLY_LINE_PATTERN = re.compile(
+    r"^([A-Za-z]+\s+)?\d{4}\s*[-–]\s*(\d{4}|[Pp]resent|([A-Za-z]+\s+)?\d{4})"
+    r"(\s*\(\d+\s+years?\s+\d+\s+months?\))?\s*$",
+    re.IGNORECASE,
+)
 
 _ROLE_COMPANY_SEPARATORS = [" at ", " @ ", " - ", " – ", " | "]
 
@@ -91,8 +99,27 @@ def _line_looks_like_experience_header(line: str) -> bool:
     return not len(header_part) < 2
 
 
+def _is_date_only_line(line: str) -> bool:
+    """True if line is only a date range, e.g. 'September 2023 - Present (2 years 7 months)'."""
+    return bool(_DATE_ONLY_LINE_PATTERN.match(line.strip()))
+
+
+def _looks_like_description_line(line: str) -> bool:
+    """True if line looks like STAR or bullet content, not company/role."""
+    s = line.strip()
+    if not s:
+        return False
+    if re.match(r"^(?:situation|task|action|result)\s*[:.)]", s, re.IGNORECASE):
+        return True
+    if re.match(r"^[STAR]\s*[:.)]", s, re.IGNORECASE):
+        return True
+    return bool(s.startswith(("●", "•", "*", "-", "·")))
+
+
 def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:
-    """Split blocks by blank lines or experience-like headers (date + role/company)."""
+    """Split blocks by blank lines or experience-like headers (date + role/company).
+    Supports LinkedIn format: Company on own line, Role on next, Date on next (date-only line).
+    """
     block: list[str] = []
     for line in lines:
         stripped = line.strip()
@@ -101,6 +128,28 @@ def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:
                 yield block
                 block = []
             continue
+        if (
+            _is_date_only_line(stripped)
+            and len(block) >= 1
+            and not _line_has_date_range(block[-1].strip())
+        ):
+            if len(block) == 1:
+                block = [block[0], line]
+                continue
+            if (
+                len(block) >= 2
+                and not _line_has_date_range(block[-2].strip())
+                and not _looks_like_description_line(block[-2])
+                and not _looks_like_description_line(block[-1])
+            ):
+                if len(block) > 2:
+                    yield block[:-2]
+                block = [block[-2], block[-1], line]
+                continue
+            if len(block) >= 2 and _looks_like_description_line(block[-2]):
+                yield block[:-1]
+                block = [block[-1], line]
+                continue
         if _line_looks_like_experience_header(stripped) and block:
             yield block
             block = []
@@ -110,6 +159,38 @@ def _iter_blocks(lines: list[str]) -> Iterable[list[str]]:
 
 
 def _build_entry_from_block(block: list[str]) -> ExperienceEntry:
+    if (
+        len(block) >= 3
+        and _line_has_date_range(block[2].strip())
+        and not _line_has_date_range(block[0].strip())
+        and not _line_has_date_range(block[1].strip())
+    ):
+        company = block[0].strip() or None
+        role = block[1].strip() or None
+        start_date, end_date = _extract_date_range(block[2])
+        rest_description = "\n".join(block[3:]).strip() or None
+        return ExperienceEntry(
+            company=company,
+            role=role,
+            start_date=start_date,
+            end_date=end_date,
+            description=rest_description,
+        )
+    if (
+        len(block) >= 2
+        and _line_has_date_range(block[1].strip())
+        and not _line_has_date_range(block[0].strip())
+    ):
+        role, company = _split_role_company(block[0].strip())
+        start_date, end_date = _extract_date_range(block[1])
+        rest_description = "\n".join(block[2:]).strip() or None
+        return ExperienceEntry(
+            company=company,
+            role=role,
+            start_date=start_date,
+            end_date=end_date,
+            description=rest_description,
+        )
     header = block[0]
     rest_description = "\n".join(block[1:]).strip() or None
 
