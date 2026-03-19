@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict
-from typing import TYPE_CHECKING, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Path, UploadFile, status
 from fastapi.concurrency import run_in_threadpool
 
 from src.api.dependencies import get_extractor, get_repo
 from src.domain.cv_parser import parse_cv
+from src.domain.document_extractor_contracts import DocumentExtractor
 from src.infra.config import Settings, get_settings
 from src.infra.logging_config import get_logger
 from src.infra.schemas import (
@@ -21,11 +22,8 @@ from src.infra.schemas import (
     ExtractResponse,
     HealthResponse,
 )
+from src.infra.storage import ExtractionRepository
 from src.services.upload_validator import ValidationError, validate_upload
-
-if TYPE_CHECKING:
-    from src.domain.document_extractor_contracts import DocumentExtractor
-    from src.infra.storage import ExtractionRepository
 
 logger = get_logger(__name__)
 router = APIRouter()
