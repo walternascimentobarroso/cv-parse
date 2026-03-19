@@ -25,3 +25,6 @@ htmlcov/
 
 #Ignore vscode AI rules
 .github/instructions/codacy.instructions.md
+
+# Local-only PDFs (golden CV is tests/fixtures/profile.pdf — tracked)
+tests/fixtures/private_*.pdf

@@ -30,6 +30,7 @@ pythonpath = ["."]
 
 [dependency-groups]
 dev = [
+    "fpdf2>=2.8.7",
     "pyright>=1.1.408",
 ]
 

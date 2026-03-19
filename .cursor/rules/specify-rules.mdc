@@ -6,7 +6,7 @@ alwaysApply: true
 
 # CV Development Guidelines
 
-Auto-generated from all feature plans. Last updated: 2026-03-11
+Auto-generated from all feature plans. Last updated: 2026-03-18
 
 ## Active Technologies
 - Python 3.12 (existing) + FastAPI, motor, pdfplumber, pydantic-settings (existing); pytest, httpx already in pyproject.toml (003-testing-strategy)
@@ -18,6 +18,8 @@ Auto-generated from all feature plans. Last updated: 2026-03-11
 - MongoDB (existing CV collection; extended document shape with `parsed_data`) (006-structured-cv-parsing)
 - Python 3.12 + FastAPI, Motor (MongoDB), pdfplumber, Pydantic, project-specific parsing utilities (007-extract-personal-info)
 - MongoDB (existing flexible schema; no new collections) (007-extract-personal-info)
+- Python 3.12 + FastAPI, Motor, infra `cv_extractors/`, application orchestration; additive `parsed_data` (008-advanced-cv-extraction)
+- MongoDB (same collection; `parsed_data` grows additively) (008-advanced-cv-extraction)
 
 - Python 3.12 (existing; from 001-doc-to-text-api) + Unchanged from 001 (FastAPI, motor, pdfplumber, pydantic-settings, etc.); managed via uv and `pyproject.toml` (002-dev-env-tooling)
 
@@ -48,9 +50,9 @@ tests/           # Mirror src: tests/domain, tests/api, tests/infra
 Python 3.12 (existing; from 001-doc-to-text-api): Follow standard conventions
 
 ## Recent Changes
+- 008-advanced-cv-extraction: Added Python 3.12 + FastAPI, Motor, pdfplumber, pydantic-settings (unchanged)
 - 007-extract-personal-info: Added Python 3.12 + FastAPI, Motor (MongoDB), pdfplumber, Pydantic, project-specific parsing utilities
-- 006-structured-cv-parsing: Added Python 3.12 + FastAPI, Motor (async MongoDB driver), Pydantic, pdfplumber, pydantic-settings
-- 005-extractions-crud-audit: Added Python 3.12 + FastAPI, Motor (async MongoDB), Pydantic
+- 008-advanced-cv-extraction: Implemented `application/cv_parsing.py`, `infra/cv_extractors/*`, golden `profile.pdf`, additive `parsed_data`; `CV_PARSER_ENHANCED` env
 
 
 <!-- MANUAL ADDITIONS START -->

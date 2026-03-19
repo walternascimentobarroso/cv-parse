@@ -61,6 +61,9 @@ def _iter_urls(text: str) -> Iterable[str]:
         url = match.group(1).strip()
         if not url:
             continue
+        end = match.end()
+        if end < len(text) and text[end] == "@":
+            continue
         yield url
 
 
@@ -123,6 +126,39 @@ def extract_links(text: str) -> dict[str, str | None]:
     return {"linkedin": linkedin, "github": github}
 
 
+def extract_personal_website(urls: Iterable[str], email: str | None) -> str | None:
+    mail_domain: str | None = None
+    if email and "@" in email:
+        mail_domain = email.rsplit("@", 1)[-1].lower().strip()
+    for url in urls:
+        normalized = _normalize_url(url)
+        if normalized is None:
+            continue
+        host = urlparse(normalized).netloc.lower()
+        if "linkedin.com" in host or host.endswith("github.com"):
+            continue
+        if mail_domain and (host == mail_domain or host.endswith(f".{mail_domain}")):
+            continue
+        return normalized
+    return None
+
+
+def extract_location_from_header(header_lines: list[str]) -> str | None:
+    """City/region line: comma-separated place, not email/URL/phone."""
+    for raw in header_lines[1:12]:
+        candidate = raw.strip()
+        if not candidate:
+            continue
+        lowered = candidate.lower()
+        if "@" in candidate or "http" in lowered or lowered.startswith("www."):
+            continue
+        if PHONE_REGEX.search(candidate) and len(candidate) < 30:
+            continue
+        if "," in candidate and 4 < len(candidate) < 120:
+            return candidate
+    return None
+
+
 def _looks_like_heading(text: str) -> bool:
     lowered = text.lower()
     if "experience" in lowered:
@@ -178,16 +214,45 @@ def _paragraphs(lines: list[str]) -> list[str]:
     return paragraphs
 
 
+_SUMMARY_LABELS = frozenset({"summary", "profile", "about me"})
+_SUMMARY_STOP = frozenset(
+    {
+        "experience",
+        "education",
+        "skills",
+        "certifications",
+        "languages",
+        "projects",
+        "employment",
+    }
+)
+
+
 def extract_summary(text: str) -> str | None:
     if not text:
         return None
     lines = text.splitlines()
+    for i, line in enumerate(lines):
+        if line.strip().lower() not in _SUMMARY_LABELS:
+            continue
+        acc: list[str] = []
+        for j in range(i + 1, len(lines)):
+            s = lines[j].strip()
+            if not s:
+                if acc:
+                    return " ".join(acc)
+                continue
+            low = s.lower()
+            first_word = low.split()[0] if low.split() else ""
+            if low in _SUMMARY_STOP or first_word in _SUMMARY_STOP:
+                break
+            acc.append(s)
+        if acc:
+            return " ".join(acc)
+
     paragraphs = _paragraphs(lines)
     if len(paragraphs) < 2:
         return None
-
-    # Expected summary is the paragraph right after the header block (name/email/links),
-    # usually separated by a blank line.
     candidate = paragraphs[1]
     if _starts_with_section_heading(candidate):
         return None
@@ -205,16 +270,22 @@ def extract_personal_info(raw_text: str) -> dict[str, str | None]:
 
     email = extract_email(header_text)
     phone = extract_phone(header_text)
+    urls = list(_iter_urls(header_text))
     links = extract_links(header_text)
     name = extract_name(header_lines)
     summary = extract_summary(raw_text)
+    website = extract_personal_website(urls, email)
+    location = extract_location_from_header(header_lines)
 
     info = PersonalInfo(
         full_name=name,
+        name=name,
         email=email,
         phone=phone,
         linkedin=links.get("linkedin"),
         github=links.get("github"),
+        website=website,
+        location=location,
         summary=summary,
     )
     return info.to_dict()

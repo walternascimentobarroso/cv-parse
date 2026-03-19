@@ -237,10 +237,13 @@ def test_extract_personal_info_empty_text_returns_all_keys() -> None:
     result = extract_personal_info("")
     expected_keys = {
         "full_name",
+        "name",
         "email",
         "phone",
         "linkedin",
         "github",
+        "website",
+        "location",
         "summary",
     }
     if set(result.keys()) != expected_keys:

@@ -1,0 +1,17 @@
+Alice Smith
+alice@smith.dev
+
+I build APIs.
+
+Experience
+Engineer at OldCo Ltd
+2019 - 2020
+
+Education
+Uni, BSc 2015-2019
+
+Skills
+Python
+
+Certifications
+CKA

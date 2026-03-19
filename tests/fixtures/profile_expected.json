@@ -1,0 +1,13 @@
+{
+  "min_experience_entries": 2,
+  "email": "jane.doe@example.com",
+  "linkedin_host": "linkedin.com",
+  "website_host": "janedoe.dev",
+  "location_substring": "Paris",
+  "summary_substring": "Senior software engineer",
+  "min_hard_skills": 2,
+  "min_soft_skills": 1,
+  "min_languages": 2,
+  "certification_substring": "AWS",
+  "experience_company_substrings": ["Acme", "Beta"]
+}
