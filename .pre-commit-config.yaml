@@ -21,3 +21,9 @@ repos:
         language: system
         pass_filenames: false
 
+      - id: jscpd
+        name: jscpd copy/paste detection
+        entry: npx jscpd .
+        language: system
+        pass_filenames: false
+

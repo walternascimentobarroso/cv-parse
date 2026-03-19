@@ -6,7 +6,7 @@ YELLOW=\033[0;33m
 CYAN=\033[0;36m
 RED=\033[0;31m
 
-.PHONY: install up down recreate logs run test test-unit test-api test-integration lint lint-fix check format format-check validate typecheck deactivate clear-branches
+.PHONY: install up down recreate logs run test test-unit test-api test-integration lint lint-fix check format format-check validate typecheck copy-check deactivate clear-branches
 
 # -T avoids "not a TTY" during pre-push; env vars keep colored output (pytest, ruff, etc.).
 DOCKER_EXEC_API = docker compose exec -T -e FORCE_COLOR=1 -e PY_COLORS=1 -e TERM=xterm-256color api
@@ -53,10 +53,15 @@ lint-fix:
 typecheck:
 	$(DOCKER_EXEC_API) uv run pyright
 
+# Copy/paste detection (uses .jscpd.json). Requires Node/npx.
+copy-check:
+	npx jscpd . --silent
+
 validate:
 	$(MAKE) format
 	$(MAKE) lint
 	$(MAKE) typecheck
+	$(MAKE) copy-check
 	$(MAKE) test
 
 # Exit the virtual environment (run 'deactivate' in your shell for the current session)
